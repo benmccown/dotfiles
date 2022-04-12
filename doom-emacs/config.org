@@ -1,0 +1,119 @@
+#+title: My Emacs Configuration
+#+author: Ben McCown
+
+* Doom Setup
+
+** Identity
+
+Some functionality uses this to identify you, e.g. GPG configuration, email clients, file templates, and snippets. This is optional.
+
+#+begin_src emacs-lisp
+(setq user-full-name "Ben McCown"
+      user-mail-address "mccownbm@amazon.com")
+#+end_src
+
+** Theme
+
+I am using monokai pro for emacs as well as in VS Code. Line numbers are lightened for legibility ([[https://github.com/Hettomei/dotfiles/blob/f475ff6407a10dcdfe123faa11611dd9fffd190c/default/doom.d/config.el#L71][source]])
+
+#+begin_src emacs-lisp
+(setq doom-theme 'doom-monokai-pro)
+(setq display-line-numbers-type t)
+
+(when (display-graphic-p)
+  (custom-theme-set-faces! 'doom-monokai-pro
+    '(line-number :foreground "#615b56")
+    )
+  )
+#+end_src
+
+** Files
+
+#+begin_src emacs-lisp
+(setq org-directory "~/Documents/doom-org")
+(setq diary-file "~/Documents/doom-org/diary")
+#+end_src
+
+** Org Mode
+
+#+begin_src emacs-lisp
+(after! org
+  (setq org-log-into-drawer "LOGBOOK")
+#+end_src
+
+*** Priorities
+
+Here we override the default priorities to a number based system.
+
+#+begin_src emacs-lisp
+  (setq org-priority-highest 1)
+  (setq org-priority-lowest 5)
+  (setq org-priority-default 3)
+#+end_src
+
+This function will set the default priority as per the above definiton.
+
+#+begin_src emacs-lisp
+  (defun prio ()
+  (format "[#%d]" org-priority-default))
+#+end_src
+
+*** Todo Items
+
+#+begin_src emacs-lisp
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
+  (setq org-todo-keywords-for-agenda
+        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
+#+end_src
+
+#+begin_src emacs-lisp
+  (setq org-capture-templates
+        '(
+        ("a" "AppFlow Project Item" entry (file+headline "~/Documents/doom-org/appflow-replacement.org" "AppFlow Epic")
+           "* TODO %(prio) %?\nSCHEDULED: %^t\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
+        ("b" "Backlog Item" entry (file org-default-inbox-file)
+           "* TODO [#5] %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
+        ("s" "Scheduled ToDo Item" entry (file org-default-inbox-file)
+           "* TODO %(prio) %?\nSCHEDULED: %^t\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
+        )
+        )
+#+end_src
+
+Sourced from [[https://github.com/james-stoup/emacs-org-mode-tutorial#default-settings][this tutorial]].
+
+#+begin_src emacs-lisp
+  (setq org-log-done 'time)
+  (setq org-hide-emphasis-markers t)
+  (add-hook 'org-mode-hook 'visual-line-mode)
+#+end_src
+
+*** End Org Mode Dependency
+
+#+begin_src emacs-lisp
+)
+#+end_src
+
+** Keybindings
+
+Based on the following reading materials.
+
+    - [[https://rameezkhan.me/adding-keybindings-to-doom-emacs/]]
+    - https://docs.doomemacs.org/latest/#/manual/concepts/special-keys/leader-localleader-keys
+    - [[https://github.com/hlissner/doom-emacs/issues/2403]]
+
+#+begin_src emacs-lisp
+(map! :after evil-org
+      :map evil-org-mode-map
+      :localleader
+      (:prefix-map ("z" . "custom")
+       :desc "Toggle hide drawer" "a" #'org-hide-drawer-toggle)
+      )
+#+end_src
+
+Pulled from the following link.
+[[https://emacs.stackexchange.com/questions/16551/how-do-i-view-all-org-mode-todos-that-are-not-recurring-or-not-scheduled]]
+
+#+begin_src emacs-lisp
+(push '("cu" "Unscheduled TODO" ((todo "" ((org-agenda-overriding-header "\nUnscheduled TODO") (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp))))) nil nil) org-agenda-custom-commands)
+#+end_src
