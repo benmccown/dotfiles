@@ -3,6 +3,13 @@
 
 * Doom Setup
 
+Place the following in ~~/.doom.d/config.el~ and uncomment it.
+
+#+begin_src emacs-lisp
+;; (package-initialize)
+;; (org-babel-load-file "~/.dotfiles/doom-emacs/config.org")
+#+end_src
+
 ** Identity
 
 Some functionality uses this to identify you, e.g. GPG configuration, email clients, file templates, and snippets. This is optional.
@@ -35,6 +42,8 @@ I am using monokai pro for emacs as well as in VS Code. Line numbers are lighten
 #+end_src
 
 ** Org Mode
+
+*** Begin Org Mode Dependency
 
 #+begin_src emacs-lisp
 (after! org
@@ -115,5 +124,12 @@ Pulled from the following link.
 [[https://emacs.stackexchange.com/questions/16551/how-do-i-view-all-org-mode-todos-that-are-not-recurring-or-not-scheduled]]
 
 #+begin_src emacs-lisp
-(push '("cu" "Unscheduled TODO" ((todo "" ((org-agenda-overriding-header "\nUnscheduled TODO") (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp))))) nil nil) org-agenda-custom-commands)
+(after! evil-org
+(push '("cu" "Unscheduled TODO"
+         ((todo ""
+                ((org-agenda-overriding-header "\nUnscheduled TODO")
+                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp)))))
+         nil
+         nil) org-agenda-custom-commands)
+)
 #+end_src

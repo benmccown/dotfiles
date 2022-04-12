@@ -1,3 +1,6 @@
+;; (package-initialize)
+;; (org-babel-load-file "~/.dotfiles/doom-emacs/config.org")
+
 (setq user-full-name "Ben McCown"
       user-mail-address "mccownbm@amazon.com")
 
@@ -52,4 +55,11 @@
        :desc "Toggle hide drawer" "a" #'org-hide-drawer-toggle)
       )
 
-(push '("cu" "Unscheduled TODO" ((todo "" ((org-agenda-overriding-header "\nUnscheduled TODO") (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp))))) nil nil) org-agenda-custom-commands)
+(after! evil-org
+(push '("cu" "Unscheduled TODO"
+         ((todo ""
+                ((org-agenda-overriding-header "\nUnscheduled TODO")
+                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp)))))
+         nil
+         nil) org-agenda-custom-commands)
+)
