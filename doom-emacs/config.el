@@ -13,8 +13,13 @@
     )
   )
 
-(setq org-directory "~/Documents/doom-org")
 (setq diary-file "~/Documents/doom-org/diary")
+
+(after! org
+  (setq org-directory "~/Documents/doom-org")
+  (setq org-agenda-files (directory-files-recursively "~/Documents/doom-org" "\\.org$"))
+  (setq org-default-inbox-file "~/Documents/doom-org/todo.org")
+)
 
 (after! org
   (setq org-log-into-drawer "LOGBOOK")
