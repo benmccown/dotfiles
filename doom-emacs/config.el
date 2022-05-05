@@ -21,6 +21,13 @@
   (setq org-default-inbox-file "~/Documents/doom-org/todo.org")
 )
 
+(use-package! evil-easymotion
+  :after evil)
+  :ensure t
+  :config
+  (evilem-default-keybindings "g SPC")
+)
+
 (after! org
   (setq org-log-into-drawer "LOGBOOK")
 

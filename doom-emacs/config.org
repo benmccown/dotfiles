@@ -48,6 +48,21 @@ Source for org-agenda-files: [[https://stackoverflow.com/questions/11384516/how-
 )
 #+end_src
 
+** Evil Mode
+
+*** evil-easymotion
+
+The =evil-easymotion= package allows for quick relative navigation of a file. Instead of =5j= to go five lines down you can type =g SPC j= and letters will appear at all of the lines below your cursor. You can type the letters for the line you want to jump to. This works with all standard navigation keys.
+
+#+begin_src emacs-lisp
+(use-package! evil-easymotion
+  :after evil)
+  :ensure t
+  :config
+  (evilem-default-keybindings "g SPC")
+)
+#+end_src
+
 ** Org Mode
 
 *** Begin Org Mode Dependency
