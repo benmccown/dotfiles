@@ -19,10 +19,11 @@
   (setq org-directory "~/Documents/doom-org")
   (setq org-agenda-files (directory-files-recursively "~/Documents/doom-org" "\\.org$"))
   (setq org-default-inbox-file "~/Documents/doom-org/todo.org")
+  (setq org-roam-directory "~/Documents/doom-org/notes")
 )
 
 (use-package! evil-easymotion
-  :after evil)
+  :after evil
   :ensure t
   :config
   (evilem-default-keybindings "g SPC")

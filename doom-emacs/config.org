@@ -45,6 +45,7 @@ Source for org-agenda-files: [[https://stackoverflow.com/questions/11384516/how-
   (setq org-directory "~/Documents/doom-org")
   (setq org-agenda-files (directory-files-recursively "~/Documents/doom-org" "\\.org$"))
   (setq org-default-inbox-file "~/Documents/doom-org/todo.org")
+  (setq org-roam-directory "~/Documents/doom-org/notes")
 )
 #+end_src
 
@@ -54,14 +55,20 @@ Source for org-agenda-files: [[https://stackoverflow.com/questions/11384516/how-
 
 The =evil-easymotion= package allows for quick relative navigation of a file. Instead of =5j= to go five lines down you can type =g SPC j= and letters will appear at all of the lines below your cursor. You can type the letters for the line you want to jump to. This works with all standard navigation keys.
 
+Taken from: https://gist.github.com/LikiPiki/8f8f1d7dcf0354cff3137d12d6c8c9bb
+
 #+begin_src emacs-lisp
 (use-package! evil-easymotion
-  :after evil)
+  :after evil
   :ensure t
   :config
   (evilem-default-keybindings "g SPC")
 )
 #+end_src
+
+** Roam
+
+Install guide: https://ianjones.us/own-your-second-brain
 
 ** Org Mode
 
