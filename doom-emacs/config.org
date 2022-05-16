@@ -45,12 +45,10 @@ Source for org-agenda-files: [[https://stackoverflow.com/questions/11384516/how-
   (setq org-directory "~/Documents/doom-org")
   (setq org-agenda-files (directory-files-recursively "~/Documents/doom-org" "\\.org$"))
   (setq org-default-inbox-file "~/Documents/doom-org/todo.org")
-  (setq org-roam-directory "~/Documents/doom-org/notes")
 )
 #+end_src
 
 ** Evil Mode
-
 *** evil-easymotion
 
 The =evil-easymotion= package allows for quick relative navigation of a file. Instead of =5j= to go five lines down you can type =g SPC j= and letters will appear at all of the lines below your cursor. You can type the letters for the line you want to jump to. This works with all standard navigation keys.
@@ -70,13 +68,98 @@ Taken from: https://gist.github.com/LikiPiki/8f8f1d7dcf0354cff3137d12d6c8c9bb
 
 Install guide: https://ianjones.us/own-your-second-brain
 
+*** Files
+
+#+begin_src emacs-lisp
+(after! org-roam
+  (setq org-roam-directory "~/Documents/doom-org/notes")
+  )
+#+end_src
+
+*** Capture templates
+
+https://jethrokuan.github.io/org-roam-guide/
+
+#+begin_src emacs-lisp
+(after! org-roam
+  (setq org-roam-capture-templates
+      '(("m" "main" plain
+         "%?"
+         :if-new (file+head "main/${slug}.org"
+                            "#+title: ${title}\n")
+         :immediate-finish t
+         :unnarrowed t)
+        ("r" "reference" plain "%?"
+         :if-new
+         (file+head "reference/${title}.org" "#+title: ${title}\n")
+         :immediate-finish t
+         :unnarrowed t)
+        ("a" "article" plain "%?"
+         :if-new
+         (file+head "articles/${title}.org" "#+title: ${title}\n#+filetags: :article:\n")
+         :immediate-finish t
+         :unnarrowed t)))
+  )
+#+end_src
+
+*** Creating the property "type"
+
+#+begin_src emacs-lisp
+(after! org-roam
+  (cl-defmethod org-roam-node-type ((node org-roam-node))
+    "Return the TYPE of NODE."
+    (condition-case nil
+        (file-name-nondirectory
+         (directory-file-name
+          (file-name-directory
+           (file-relative-name (org-roam-node-file node) org-roam-directory))))
+      (error "")))
+  (setq org-roam-node-display-template
+      (concat "${type:15} ${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+  )
+#+end_src
+
 ** Org Mode
 
-*** Begin Org Mode Dependency
+*** Begin org mode dependency
 
 #+begin_src emacs-lisp
 (after! org
+#+end_src
+
+*** Log into drawer
+
+This ensures timestamps are logged on todo state changes.
+
+#+begin_src emacs-lisp
   (setq org-log-into-drawer "LOGBOOK")
+#+end_src
+
+*** Capture Templates
+
+Set todo and roam capture templates.
+
+#+begin_src emacs-lisp
+  (setq org-capture-templates
+        '(
+        ("a" "AppFlow project item" entry (file+headline "~/Documents/doom-org/appflow-replacement.org" "AppFlow Epic")
+           "* TODO %(prio) %?\nSCHEDULED: %^t\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
+        ("b" "Backlog item" entry (file org-default-inbox-file)
+           "* TODO [#5] %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
+        ("s" "Scheduled todo item" entry (file org-default-inbox-file)
+           "* TODO %(prio) %?\nSCHEDULED: %^t\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
+        ("n" "Notes slipbox" entry  (file "braindump/inbox.org")
+         "* %?\n")
+        )
+        )
+#+end_src
+
+Sourced from [[https://github.com/james-stoup/emacs-org-mode-tutorial#default-settings][this tutorial]].
+
+#+begin_src emacs-lisp
+  (setq org-log-done 'time)
+  (setq org-hide-emphasis-markers t)
+  (add-hook 'org-mode-hook 'visual-line-mode)
 #+end_src
 
 *** Priorities
@@ -97,33 +180,15 @@ This function will set the default priority as per the above definiton.
 #+end_src
 
 *** Todo Items
+**** Todo Keywords
+
+Set TODO states for regular keywords and agenda keywords.
 
 #+begin_src emacs-lisp
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
+        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
   (setq org-todo-keywords-for-agenda
-        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
-#+end_src
-
-#+begin_src emacs-lisp
-  (setq org-capture-templates
-        '(
-        ("a" "AppFlow Project Item" entry (file+headline "~/Documents/doom-org/appflow-replacement.org" "AppFlow Epic")
-           "* TODO %(prio) %?\nSCHEDULED: %^t\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
-        ("b" "Backlog Item" entry (file org-default-inbox-file)
-           "* TODO [#5] %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
-        ("s" "Scheduled ToDo Item" entry (file org-default-inbox-file)
-           "* TODO %(prio) %?\nSCHEDULED: %^t\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
-        )
-        )
-#+end_src
-
-Sourced from [[https://github.com/james-stoup/emacs-org-mode-tutorial#default-settings][this tutorial]].
-
-#+begin_src emacs-lisp
-  (setq org-log-done 'time)
-  (setq org-hide-emphasis-markers t)
-  (add-hook 'org-mode-hook 'visual-line-mode)
+        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
 #+end_src
 
 *** End Org Mode Dependency
@@ -133,21 +198,26 @@ Sourced from [[https://github.com/james-stoup/emacs-org-mode-tutorial#default-se
 #+end_src
 
 ** Keybindings
+*** Org Mode
 
 Based on the following reading materials.
 
-    - [[https://rameezkhan.me/adding-keybindings-to-doom-emacs/]]
-    - https://docs.doomemacs.org/latest/#/manual/concepts/special-keys/leader-localleader-keys
-    - [[https://github.com/hlissner/doom-emacs/issues/2403]]
+ - [[https://rameezkhan.me/adding-keybindings-to-doom-emacs/]]
+ - https://docs.doomemacs.org/latest/#/manual/concepts/special-keys/leader-localleader-keys
+ - [[https://github.com/hlissner/doom-emacs/issues/2403]]
+
+The below code block seems to be broken currently. Something to the effect of "z is not a valid function".
 
 #+begin_src emacs-lisp
-(map! :after evil-org
-      :map evil-org-mode-map
-      :localleader
-      (:prefix-map ("z" . "custom")
-       :desc "Toggle hide drawer" "a" #'org-hide-drawer-toggle)
-      )
+;; (map! :after evil-org-mode
+;;       :map evil-org-mode-map
+;;       :localleader
+;;       (:prefix-map ("z" . "custom")
+;;        :desc "Toggle hide drawer" "a" #'org-hide-drawer-toggle)
+;;       )
 #+end_src
+
+*** Org Agenda
 
 Pulled from the following link.
 [[https://emacs.stackexchange.com/questions/16551/how-do-i-view-all-org-mode-todos-that-are-not-recurring-or-not-scheduled]]
