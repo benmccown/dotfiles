@@ -13,6 +13,14 @@
     )
   )
 
+(use-package! mixed-pitch
+  :hook
+  ;; If you want it in all text modes:
+  (text-mode . mixed-pitch-mode))
+
+(setq doom-font (font-spec :family "Fira Mono" :size 16)
+      doom-variable-pitch-font (font-spec :family "Inter" :size 14))
+
 (setq diary-file "~/Documents/doom-org/diary")
 
 (after! org
@@ -42,12 +50,12 @@
          :unnarrowed t)
         ("r" "reference" plain "%?"
          :if-new
-         (file+head "reference/${title}.org" "#+title: ${title}\n")
+         (file+head "reference/${slug}.org" "#+title: ${title}\n")
          :immediate-finish t
          :unnarrowed t)
         ("a" "article" plain "%?"
          :if-new
-         (file+head "articles/${title}.org" "#+title: ${title}\n#+filetags: :article:\n")
+         (file+head "articles/${slug}.org" "#+title: ${title}\n#+filetags: :article:\n")
          :immediate-finish t
          :unnarrowed t)))
   )
@@ -71,13 +79,15 @@
 
   (setq org-capture-templates
         '(
-        ("a" "AppFlow project item" entry (file+headline "~/Documents/doom-org/appflow-replacement.org" "AppFlow Epic")
+        ("a" "AppFlow Project Item" entry (file+headline "~/Documents/doom-org/appflow-replacement.org" "AppFlow Epic")
            "* TODO %(prio) %?\nSCHEDULED: %^t\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
-        ("b" "Backlog item" entry (file org-default-inbox-file)
+        ("b" "Backlog Item" entry (file org-default-inbox-file)
            "* TODO [#5] %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
-        ("s" "Scheduled todo item" entry (file org-default-inbox-file)
+        ("s" "Scheduled Todo Item" entry (file org-default-inbox-file)
            "* TODO %(prio) %?\nSCHEDULED: %^t\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
-        ("n" "Notes slipbox" entry  (file "braindump/inbox.org")
+        ("t" "SIM Ticket or On Call Task" entry (file "sim.org")
+           "* TODO %(prio) %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
+        ("n" "Notes Slipbox Entry" entry  (file "braindump/inbox.org")
          "* %?\n")
         )
         )
@@ -97,6 +107,58 @@
         '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
   (setq org-todo-keywords-for-agenda
         '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
+
+;; fontify code in code blocks
+(setq org-src-fontify-natively t)
+
+(setq org-hide-emphasis-markers t)
+  (font-lock-add-keywords 'org-mode
+                          '(("^ *\\([-]\\) "
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+(use-package org-bullets
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+;; (let* ((variable-tuple
+;;           (cond ((x-list-fonts "Fira Mono")         '(:font "Fira Mono"))
+;;                 ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
+;;                 ((x-list-fonts "Lucida Grande")   '(:font "Lucida Grande"))
+;;                 ((x-list-fonts "Verdana")         '(:font "Verdana"))
+;;                 ((x-family-fonts "Sans Serif")    '(:family "Sans Serif"))
+;;                 (nil (warn "Cannot find a Sans Serif Font.  Install Source Sans Pro."))))
+;;          (base-font-color     (face-foreground 'default nil 'default))
+;;          (headline           `(:inherit default :weight bold :foreground ,base-font-color)))
+
+;;     (custom-theme-set-faces
+;;      'user
+;;      `(org-level-8 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-7 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-6 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-5 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-4 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-3 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-2 ((t (,@headline ,@variable-tuple :height 1.1))))
+;;      `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.2))))
+;;      `(org-document-title ((t (,@headline ,@variable-tuple :height 2.0 :underline nil))))))
+  ;; (custom-theme-set-faces
+  ;;  'user
+  ;;  '(variable-pitch ((t (:family "Fira Mono" :height 180 :weight thin))))
+  ;;  '(fixed-pitch ((t ( :family "Iosevka" :height 160)))))
+;; (add-hook 'org-mode-hook 'variable-pitch-mode)
+(custom-theme-set-faces
+   'user
+   '(org-block ((t (:inherit fixed-pitch :foreground "#ffb387"))))
+;;    '(org-code ((t (:inherit (shadow fixed-pitch)))))
+;;    '(org-document-info ((t (:foreground "dark orange"))))
+;;    '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+;;    '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
+;;    '(org-link ((t (:foreground "royal blue" :underline t))))
+;;    '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+;;    '(org-property-value ((t (:inherit fixed-pitch))) t)
+;;    '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+;;    '(org-table ((t (:inherit fixed-pitch :foreground "#83a598"))))
+;;    '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+;;    '(org-verbatim ((t (:inherit (shadow fixed-pitch)))))
+   )
 
 )
 
