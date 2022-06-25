@@ -24,25 +24,34 @@ Some functionality uses this to identify you, e.g. GPG configuration, email clie
 I am using monokai pro for emacs as well as in VS Code. Line numbers are lightened for legibility ([[https://github.com/Hettomei/dotfiles/blob/f475ff6407a10dcdfe123faa11611dd9fffd190c/default/doom.d/config.el#L71][source]])
 
 #+begin_src emacs-lisp
-(setq doom-theme 'doom-monokai-pro)
+(setq doom-theme 'doom-molokai)
 (setq display-line-numbers-type t)
 
-(when (display-graphic-p)
-  (custom-theme-set-faces! 'doom-monokai-pro
-    '(line-number :foreground "#615b56")
-    )
-  )
+(with-eval-after-load 'doom-themes
+  (doom-themes-org-config))
+
+;; (when (display-graphic-p)
+;;  (custom-theme-set-faces! 'doom-monokai-pro
+;;    '(line-number :foreground "#615b56")
+;;    )
+;;  )
 #+end_src
 
 *** Mixed Pitch Font Mode
 
 https://www.dschapman.com/notes/33f4867d-dbe9-4c4d-8b0a-d28ad6376128
 
+Source for font size change: https://emacs.stackexchange.com/questions/62987/cannot-set-correct-size-for-variable-pitch-font-in-doom-emacs
+
 #+begin_src emacs-lisp
-(use-package! mixed-pitch
-  :hook
-  ;; If you want it in all text modes:
-  (text-mode . mixed-pitch-mode))
+ (use-package! mixed-pitch
+   :hook
+   ;; If you want it in all text modes:
+   (text-mode . mixed-pitch-mode)
+   :config
+   (setq mixed-pitch-set-height t)
+   (set-face-attribute 'variable-pitch nil :height 1.2)
+)
 #+end_src
 
 *** Fonts
@@ -50,23 +59,8 @@ https://www.dschapman.com/notes/33f4867d-dbe9-4c4d-8b0a-d28ad6376128
 https://www.grszkth.fr/blog/doom-config/#font-and-appearance
 
 #+begin_src emacs-lisp
-(setq doom-font (font-spec :family "Fira Mono" :size 16)
-      doom-variable-pitch-font (font-spec :family "Inter" :size 14))
-#+end_src
-
-
-** Files
-
-Source for org-agenda-files: [[https://stackoverflow.com/questions/11384516/how-to-make-all-org-files-under-a-folder-added-in-agenda-list-automatically]]
-
-#+begin_src emacs-lisp
-(setq diary-file "~/Documents/doom-org/diary")
-
-(after! org
-  (setq org-directory "~/Documents/doom-org")
-  (setq org-agenda-files (directory-files-recursively "~/Documents/doom-org" "\\.org$"))
-  (setq org-default-inbox-file "~/Documents/doom-org/todo.org")
-)
+(setq doom-font (font-spec :family "JetBrains Mono" :size 14 :height 1.0)
+      doom-variable-pitch-font (font-spec :family "Inconsolata" :height 1.2))
 #+end_src
 
 ** Evil Mode
@@ -85,9 +79,30 @@ Taken from: https://gist.github.com/LikiPiki/8f8f1d7dcf0354cff3137d12d6c8c9bb
 )
 #+end_src
 
-** Roam
+** Org Roam
 
 Install guide: https://ianjones.us/own-your-second-brain
+
+*** Org Roam UI
+
+https://github.com/org-roam/org-roam-ui
+
+#+begin_src emacs-lisp
+(use-package! websocket
+    :after org-roam)
+
+(use-package! org-roam-ui
+    :after org-roam ;; or :after org
+;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
+;;         a hookable mode anymore, you're advised to pick something yourself
+;;         if you don't care about startup time, use
+;;  :hook (after-init . org-roam-ui-mode)
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
+#+end_src
 
 *** Files
 
@@ -141,6 +156,19 @@ https://jethrokuan.github.io/org-roam-guide/
 #+end_src
 
 ** Org Mode
+*** Files
+
+Source for org-agenda-files: [[https://stackoverflow.com/questions/11384516/how-to-make-all-org-files-under-a-folder-added-in-agenda-list-automatically]]
+
+#+begin_src emacs-lisp
+(setq diary-file "~/Documents/doom-org/diary")
+
+(after! org
+  (setq org-directory "~/Documents/doom-org")
+  (setq org-agenda-files (directory-files-recursively "~/Documents/doom-org" "\\.org$"))
+  (setq org-default-inbox-file "~/Documents/doom-org/todo.org")
+)
+#+end_src
 
 *** Begin org mode dependency
 
@@ -209,9 +237,9 @@ Set TODO states for regular keywords and agenda keywords.
 
 #+begin_src emacs-lisp
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
+        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "WAITING(w@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
   (setq org-todo-keywords-for-agenda
-        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
+        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "WAITING(w@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
 #+end_src
 
 *** Code Block Formatting
@@ -223,7 +251,6 @@ https://orgmode.org/worg/org-contrib/babel/examples/fontify-src-code-blocks.html
 (setq org-src-fontify-natively t)
 #+end_src
 
-
 *** Beautify Emacs Org Mode
 
 https://zzamboni.org/post/beautifying-org-mode-in-emacs/
@@ -233,9 +260,6 @@ https://zzamboni.org/post/beautifying-org-mode-in-emacs/
   (font-lock-add-keywords 'org-mode
                           '(("^ *\\([-]\\) "
                              (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
-(use-package org-bullets
-    :config
-    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 ;; (let* ((variable-tuple
 ;;           (cond ((x-list-fonts "Fira Mono")         '(:font "Fira Mono"))
 ;;                 ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
@@ -264,7 +288,7 @@ https://zzamboni.org/post/beautifying-org-mode-in-emacs/
 ;; (add-hook 'org-mode-hook 'variable-pitch-mode)
 (custom-theme-set-faces
    'user
-   '(org-block ((t (:inherit fixed-pitch :foreground "#ffb387"))))
+;;    '(org-block ((t (:inherit fixed-pitch :foreground "#f7eeeb" :background "#433143"))))
 ;;    '(org-code ((t (:inherit (shadow fixed-pitch)))))
 ;;    '(org-document-info ((t (:foreground "dark orange"))))
 ;;    '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
@@ -285,6 +309,25 @@ https://zzamboni.org/post/beautifying-org-mode-in-emacs/
 )
 #+end_src
 
+*** org-bullet Mode
+
+https://zzamboni.org/post/beautifying-org-mode-in-emacs/
+
+#+begin_src emacs-lisp
+(use-package org-bullets
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+end_src
+
+** Avy
+*** Customization
+
+#+begin_src emacs-lisp
+(after! avy
+  (setq avy-keys (number-sequence ?a ?z))
+  (setq avy-style 'at)
+  )
+#+end_src
 ** Keybindings
 *** Org Mode
 
@@ -311,12 +354,23 @@ Pulled from the following link.
 [[https://emacs.stackexchange.com/questions/16551/how-do-i-view-all-org-mode-todos-that-are-not-recurring-or-not-scheduled]]
 
 #+begin_src emacs-lisp
-(after! evil-org
-(push '("cu" "Unscheduled TODO"
+;; (after! org
+;; (push '("cu" "Unscheduled TODO"
+;;          ((todo ""
+;;                 ((org-agenda-overriding-header "\nUnscheduled TODO")
+;;                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp)))))
+;;          nil
+;;          nil) org-agenda-custom-commands)
+;; )
+#+end_src
+
+#+begin_src emacs-lisp
+(setq org-agenda-custom-commands
+      '(("c" . "My Custom Agendas")
+        ("cu" "Unscheduled TODO"
          ((todo ""
                 ((org-agenda-overriding-header "\nUnscheduled TODO")
-                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp)))))
+                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled)))))
          nil
-         nil) org-agenda-custom-commands)
-)
+         nil)))
 #+end_src

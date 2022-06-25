@@ -4,30 +4,29 @@
 (setq user-full-name "Ben McCown"
       user-mail-address "mccownbm@amazon.com")
 
-(setq doom-theme 'doom-monokai-pro)
+(setq doom-theme 'doom-molokai)
 (setq display-line-numbers-type t)
 
-(when (display-graphic-p)
-  (custom-theme-set-faces! 'doom-monokai-pro
-    '(line-number :foreground "#615b56")
-    )
-  )
+(with-eval-after-load 'doom-themes
+  (doom-themes-org-config))
 
-(use-package! mixed-pitch
-  :hook
-  ;; If you want it in all text modes:
-  (text-mode . mixed-pitch-mode))
+;; (when (display-graphic-p)
+;;  (custom-theme-set-faces! 'doom-monokai-pro
+;;    '(line-number :foreground "#615b56")
+;;    )
+;;  )
 
-(setq doom-font (font-spec :family "Fira Mono" :size 16)
-      doom-variable-pitch-font (font-spec :family "Inter" :size 14))
-
-(setq diary-file "~/Documents/doom-org/diary")
-
-(after! org
-  (setq org-directory "~/Documents/doom-org")
-  (setq org-agenda-files (directory-files-recursively "~/Documents/doom-org" "\\.org$"))
-  (setq org-default-inbox-file "~/Documents/doom-org/todo.org")
+ (use-package! mixed-pitch
+   :hook
+   ;; If you want it in all text modes:
+   (text-mode . mixed-pitch-mode)
+   :config
+   (setq mixed-pitch-set-height t)
+   (set-face-attribute 'variable-pitch nil :height 1.2)
 )
+
+(setq doom-font (font-spec :family "JetBrains Mono" :size 14 :height 1.0)
+      doom-variable-pitch-font (font-spec :family "Inconsolata" :height 1.2))
 
 (use-package! evil-easymotion
   :after evil
@@ -35,6 +34,21 @@
   :config
   (evilem-default-keybindings "g SPC")
 )
+
+(use-package! websocket
+    :after org-roam)
+
+(use-package! org-roam-ui
+    :after org-roam ;; or :after org
+;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
+;;         a hookable mode anymore, you're advised to pick something yourself
+;;         if you don't care about startup time, use
+;;  :hook (after-init . org-roam-ui-mode)
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
 
 (after! org-roam
   (setq org-roam-directory "~/Documents/doom-org/notes")
@@ -73,6 +87,14 @@
       (concat "${type:15} ${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
   )
 
+(setq diary-file "~/Documents/doom-org/diary")
+
+(after! org
+  (setq org-directory "~/Documents/doom-org")
+  (setq org-agenda-files (directory-files-recursively "~/Documents/doom-org" "\\.org$"))
+  (setq org-default-inbox-file "~/Documents/doom-org/todo.org")
+)
+
 (after! org
 
   (setq org-log-into-drawer "LOGBOOK")
@@ -104,9 +126,9 @@
   (format "[#%d]" org-priority-default))
 
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
+        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "WAITING(w@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
   (setq org-todo-keywords-for-agenda
-        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
+        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "OPEN_CR(c@)" "UNDER_REVIEW(r@)" "WAITING(w@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
 
 ;; fontify code in code blocks
 (setq org-src-fontify-natively t)
@@ -115,9 +137,6 @@
   (font-lock-add-keywords 'org-mode
                           '(("^ *\\([-]\\) "
                              (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
-(use-package org-bullets
-    :config
-    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 ;; (let* ((variable-tuple
 ;;           (cond ((x-list-fonts "Fira Mono")         '(:font "Fira Mono"))
 ;;                 ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
@@ -146,7 +165,7 @@
 ;; (add-hook 'org-mode-hook 'variable-pitch-mode)
 (custom-theme-set-faces
    'user
-   '(org-block ((t (:inherit fixed-pitch :foreground "#ffb387"))))
+;;    '(org-block ((t (:inherit fixed-pitch :foreground "#f7eeeb" :background "#433143"))))
 ;;    '(org-code ((t (:inherit (shadow fixed-pitch)))))
 ;;    '(org-document-info ((t (:foreground "dark orange"))))
 ;;    '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
@@ -162,6 +181,15 @@
 
 )
 
+(use-package org-bullets
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+(after! avy
+  (setq avy-keys (number-sequence ?a ?z))
+  (setq avy-style 'at)
+  )
+
 ;; (map! :after evil-org-mode
 ;;       :map evil-org-mode-map
 ;;       :localleader
@@ -169,11 +197,20 @@
 ;;        :desc "Toggle hide drawer" "a" #'org-hide-drawer-toggle)
 ;;       )
 
-(after! evil-org
-(push '("cu" "Unscheduled TODO"
+;; (after! org
+;; (push '("cu" "Unscheduled TODO"
+;;          ((todo ""
+;;                 ((org-agenda-overriding-header "\nUnscheduled TODO")
+;;                  (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp)))))
+;;          nil
+;;          nil) org-agenda-custom-commands)
+;; )
+
+(setq org-agenda-custom-commands
+      '(("c" . "My Custom Agendas")
+        ("cu" "Unscheduled TODO"
          ((todo ""
                 ((org-agenda-overriding-header "\nUnscheduled TODO")
-                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'timestamp)))))
+                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled)))))
          nil
-         nil) org-agenda-custom-commands)
-)
+         nil)))
