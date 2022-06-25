@@ -10,6 +10,12 @@ Place the following in ~~/.doom.d/config.el~ and uncomment it.
 ;; (org-babel-load-file "~/.dotfiles/doom-emacs/config.org")
 #+end_src
 
+And then set up a symlink for =packages.el=
+
+#+begin_src shell
+ln -s /path/to/home/dir/.dotfiles/doom-emacs/packages.el /path/to/home/dir/.doom.d/packages.el
+#+end_src
+
 ** Identity
 
 Some functionality uses this to identify you, e.g. GPG configuration, email clients, file templates, and snippets. This is optional.
