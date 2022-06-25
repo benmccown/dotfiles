@@ -13,7 +13,7 @@ Place the following in ~~/.doom.d/config.el~ and uncomment it.
 And then set up a symlink for =packages.el=
 
 #+begin_src shell
-ln -s /path/to/home/dir/.dotfiles/doom-emacs/packages.el /path/to/home/dir/.doom.d/packages.el
+# ln -s /path/to/home/dir/.dotfiles/doom-emacs/packages.el /path/to/home/dir/.doom.d/packages.el
 #+end_src
 
 ** Identity
