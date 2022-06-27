@@ -1,0 +1,354 @@
+#+title: My Emacs Configuration
+#+author: Ben McCown
+
+* Doom Setup
+
+Place the following in ~~/.doom.d/config.el~ and uncomment it.
+
+#+begin_src emacs-lisp
+;; (package-initialize)
+;; (org-babel-load-file "~/dotfiles/doom-emacs/config.org")
+#+end_src
+
+And then set up a symlink for =packages.el=
+
+#+begin_src shell
+# ln -s /path/to/home/dir/.dotfiles/doom-emacs/packages.el /path/to/home/dir/.doom.d/packages.el
+#+end_src
+
+** Identity
+
+Some functionality uses this to identify you, e.g. GPG configuration, email clients, file templates, and snippets. This is optional.
+
+#+begin_src emacs-lisp
+(setq user-full-name "Ben McCown"
+      user-mail-address "bmccown93@gmail.com")
+#+end_src
+
+** iOS Fix
+
+The opt/meta key wasn't working for me in emacs. I thought this was emacs related and looked for fix, but it turns out it's something you can configure in the blink shell app config. I set both left and write to send "esc" which has a note mentioning it is the emacs meta key.
+
+[[https://docs.blink.sh/basics/tips-and-tricks#keyboard-separate-keys][Link to blink.sh docs.]]
+
+** rpgdm
+
+Source: https://gitlab.com/howardabrams/emacs-rpgdm/
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "~/dotfiles/personal-emacs/emacs-rpgdm/")
+#+end_src
+
+** Theme
+
+I am using monokai pro for emacs as well as in VS Code. Line numbers are lightened for legibility ([[https://github.com/Hettomei/dotfiles/blob/f475ff6407a10dcdfe123faa11611dd9fffd190c/default/doom.d/config.el#L71][source]])
+
+#+begin_src emacs-lisp
+(setq doom-theme 'doom-molokai)
+(setq display-line-numbers-type t)
+
+(with-eval-after-load 'doom-themes
+  (doom-themes-org-config))
+#+end_src
+
+*** Mixed Pitch Font Mode
+
+https://www.dschapman.com/notes/33f4867d-dbe9-4c4d-8b0a-d28ad6376128
+
+Source for font size change: https://emacs.stackexchange.com/questions/62987/cannot-set-correct-size-for-variable-pitch-font-in-doom-emacs
+
+#+begin_src emacs-lisp
+ (use-package! mixed-pitch
+   :hook
+   ;; If you want it in all text modes:
+   (text-mode . mixed-pitch-mode)
+   :config
+   (setq mixed-pitch-set-height t)
+   (set-face-attribute 'variable-pitch nil :height 1.2)
+)
+#+end_src
+
+*** Fonts
+
+https://www.grszkth.fr/blog/doom-config/#font-and-appearance
+
+#+begin_src emacs-lisp
+;; (setq doom-font (font-spec :family "JetBrains Mono" :size 14 :height 1.0)
+;;      doom-variable-pitch-font (font-spec :family "Inconsolata" :height 1.2))
+#+end_src
+
+** Evil Mode
+*** evil-easymotion
+
+The =evil-easymotion= package allows for quick relative navigation of a file. Instead of =5j= to go five lines down you can type =g SPC j= and letters will appear at all of the lines below your cursor. You can type the letters for the line you want to jump to. This works with all standard navigation keys.
+
+Taken from: https://gist.github.com/LikiPiki/8f8f1d7dcf0354cff3137d12d6c8c9bb
+
+#+begin_src emacs-lisp
+(use-package! evil-easymotion
+  :after evil
+  :ensure t
+  :config
+  (evilem-default-keybindings "g SPC")
+)
+#+end_src
+
+** Org Roam
+
+Install guide: https://ianjones.us/own-your-second-brain
+
+*** Files
+
+#+begin_src emacs-lisp
+(after! org-roam
+  (setq org-roam-directory "~/org/ttrpg")
+  )
+#+end_src
+
+*** Capture templates
+
+https://jethrokuan.github.io/org-roam-guide/
+
+#+begin_src emacs-lisp
+(after! org-roam
+  (setq org-roam-capture-templates
+      '(("p" "place" plain ":PROPERTIES:\n:ID: %(org-id-new)\n:END:\n\n%?"
+         :if-new (file+olp "places.org"
+                            ("${title}"))
+         :immediate-finish t
+         :unnarrowed t)
+        ("n" "npc" plain ":PROPERTIES:\n:ID: %(org-id-new)\n:END:\n\nName: %^{Name}%?"
+         :if-new
+         (file+olp "npcs.org" ("${title}"))
+         :immediate-finish t
+         :unnarrowed t)
+        ("r" "reference" plain "%?"
+         :if-new
+         (file+head "reference/${slug}.org" "#+title: ${title}\n")
+         :immediate-finish t
+         :unnarrowed t)
+        ("a" "article" plain "%?"
+         :if-new
+         (file+head "articles/${slug}.org" "#+title: ${title}\n#+filetags: :article:\n")
+         :immediate-finish t
+         :unnarrowed t)))
+  )
+#+end_src
+
+*** Creating the property "type"
+
+#+begin_src emacs-lisp
+(after! org-roam
+  (cl-defmethod org-roam-node-type ((node org-roam-node))
+    "Return the TYPE of NODE."
+    (condition-case nil
+        (file-name-base (org-roam-node-file node))
+      (error "")))
+  (setq org-roam-node-display-template
+      (concat "${type:15} ${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+  )
+#+end_src
+
+** Org Mode
+*** Files
+
+Source for org-agenda-files: [[https://stackoverflow.com/questions/11384516/how-to-make-all-org-files-under-a-folder-added-in-agenda-list-automatically]]
+
+#+begin_src emacs-lisp
+(after! org
+  (setq org-directory "~/org")
+  (setq org-agenda-files (directory-files-recursively "~/org" "\\.org$"))
+)
+#+end_src
+
+*** Begin org mode dependency
+
+#+begin_src emacs-lisp
+(after! org
+#+end_src
+
+*** Log into drawer
+
+This ensures timestamps are logged on todo state changes.
+
+#+begin_src emacs-lisp
+  (setq org-log-into-drawer "LOGBOOK")
+#+end_src
+
+*** Capture Templates
+
+Set todo and roam capture templates.
+
+#+begin_src emacs-lisp
+  (setq org-capture-templates
+        '(
+        ("b" "Backlog Item" entry (file org-default-inbox-file)
+           "* TODO [#5] %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
+        ("s" "Scheduled Todo Item" entry (file org-default-inbox-file)
+           "* TODO %(prio) %?\nSCHEDULED: %^t\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
+        ("t" "SIM Ticket or On Call Task" entry (file "sim.org")
+           "* TODO %(prio) %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n:LOGBOOK:\n:END:\n" :empty-lines-before 1 :empty-lines-after 1)
+        ("n" "Notes Slipbox Entry" entry  (file "braindump.org")
+         "* %?\n")
+        )
+        )
+#+end_src
+
+Sourced from [[https://github.com/james-stoup/emacs-org-mode-tutorial#default-settings][this tutorial]].
+
+#+begin_src emacs-lisp
+  (setq org-log-done 'time)
+  (setq org-hide-emphasis-markers t)
+  (add-hook 'org-mode-hook 'visual-line-mode)
+#+end_src
+
+*** Priorities
+
+Here we override the default priorities to a number based system.
+
+#+begin_src emacs-lisp
+  (setq org-priority-highest 1)
+  (setq org-priority-lowest 5)
+  (setq org-priority-default 3)
+#+end_src
+
+This function will set the default priority as per the above definiton.
+
+#+begin_src emacs-lisp
+  (defun prio ()
+  (format "[#%d]" org-priority-default))
+#+end_src
+
+*** Todo Items
+**** Todo Keywords
+
+Set TODO states for regular keywords and agenda keywords.
+
+#+begin_src emacs-lisp
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "UNDER_REVIEW(r@)" "WAITING(w@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
+  (setq org-todo-keywords-for-agenda
+        '((sequence "TODO(t)" "FOLLOWUP_ITEM(f@/!)" "IN_PROGRESS(g!/!)" "UNDER_REVIEW(r@)" "WAITING(w@)" "BLOCKED(b@)" "|" "DONE(d!)" "OBE(e@)" "DELEGATED(p@)" "DROPPED(x@)")))
+#+end_src
+
+*** Code Block Formatting
+
+https://orgmode.org/worg/org-contrib/babel/examples/fontify-src-code-blocks.html
+
+#+begin_src emacs-lisp
+;; fontify code in code blocks
+(setq org-src-fontify-natively t)
+#+end_src
+
+*** Beautify Emacs Org Mode
+
+https://zzamboni.org/post/beautifying-org-mode-in-emacs/
+
+#+begin_src emacs-lisp
+(setq org-hide-emphasis-markers t)
+  (font-lock-add-keywords 'org-mode
+                          '(("^ *\\([-]\\) "
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+;; (let* ((variable-tuple
+;;           (cond ((x-list-fonts "Fira Mono")         '(:font "Fira Mono"))
+;;                 ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
+;;                 ((x-list-fonts "Lucida Grande")   '(:font "Lucida Grande"))
+;;                 ((x-list-fonts "Verdana")         '(:font "Verdana"))
+;;                 ((x-family-fonts "Sans Serif")    '(:family "Sans Serif"))
+;;                 (nil (warn "Cannot find a Sans Serif Font.  Install Source Sans Pro."))))
+;;          (base-font-color     (face-foreground 'default nil 'default))
+;;          (headline           `(:inherit default :weight bold :foreground ,base-font-color)))
+
+;;     (custom-theme-set-faces
+;;      'user
+;;      `(org-level-8 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-7 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-6 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-5 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-4 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-3 ((t (,@headline ,@variable-tuple))))
+;;      `(org-level-2 ((t (,@headline ,@variable-tuple :height 1.1))))
+;;      `(org-level-1 ((t (,@headline ,@variable-tuple :height 1.2))))
+;;      `(org-document-title ((t (,@headline ,@variable-tuple :height 2.0 :underline nil))))))
+  ;; (custom-theme-set-faces
+  ;;  'user
+  ;;  '(variable-pitch ((t (:family "Fira Mono" :height 180 :weight thin))))
+  ;;  '(fixed-pitch ((t ( :family "Iosevka" :height 160)))))
+;; (add-hook 'org-mode-hook 'variable-pitch-mode)
+(custom-theme-set-faces
+   'user
+;;    '(org-block ((t (:inherit fixed-pitch :foreground "#f7eeeb" :background "#433143"))))
+;;    '(org-code ((t (:inherit (shadow fixed-pitch)))))
+;;    '(org-document-info ((t (:foreground "dark orange"))))
+;;    '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+;;    '(org-indent ((t (:inherit (org-hide fixed-pitch)))))
+;;    '(org-link ((t (:foreground "royal blue" :underline t))))
+;;    '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+;;    '(org-property-value ((t (:inherit fixed-pitch))) t)
+;;    '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+;;    '(org-table ((t (:inherit fixed-pitch :foreground "#83a598"))))
+;;    '(org-tag ((t (:inherit (shadow fixed-pitch) :weight bold :height 0.8))))
+;;    '(org-verbatim ((t (:inherit (shadow fixed-pitch)))))
+   )
+#+end_src
+
+*** End Org Mode Dependency
+
+#+begin_src emacs-lisp
+)
+#+end_src
+
+*** org-bullet Mode
+
+https://zzamboni.org/post/beautifying-org-mode-in-emacs/
+
+#+begin_src emacs-lisp
+(use-package org-bullets
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+end_src
+
+** Avy
+*** Customization
+
+#+begin_src emacs-lisp
+(after! avy
+  (setq avy-keys (number-sequence ?a ?z))
+  (setq avy-style 'at)
+  )
+#+end_src
+** Keybindings
+*** Org Mode
+
+Based on the following reading materials.
+
+ - [[https://rameezkhan.me/adding-keybindings-to-doom-emacs/]]
+ - https://docs.doomemacs.org/latest/#/manual/concepts/special-keys/leader-localleader-keys
+ - [[https://github.com/hlissner/doom-emacs/issues/2403]]
+
+The below code block seems to be broken currently. Something to the effect of "z is not a valid function".
+
+#+begin_src emacs-lisp
+;; (map! :after evil-org-mode
+;;       :map evil-org-mode-map
+;;       :localleader
+;;       (:prefix-map ("z" . "custom")
+;;        :desc "Toggle hide drawer" "a" #'org-hide-drawer-toggle)
+;;       )
+#+end_src
+
+*** Org Agenda
+
+Pulled from the following link.
+[[https://emacs.stackexchange.com/questions/16551/how-do-i-view-all-org-mode-todos-that-are-not-recurring-or-not-scheduled]]
+
+#+begin_src emacs-lisp
+(setq org-agenda-custom-commands
+      '(("c" . "My Custom Agendas")
+        ("cu" "Unscheduled TODO"
+         ((todo ""
+                ((org-agenda-overriding-header "\nUnscheduled TODO")
+                 (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled)))))
+         nil
+         nil)))
+#+end_src

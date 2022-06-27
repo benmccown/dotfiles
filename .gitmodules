@@ -1,0 +1,3 @@
+[submodule "personal-emacs/emacs-rpgdm"]
+	path = personal-emacs/emacs-rpgdm
+	url = git@github.com:benmccown/emacs-rpgdm.git
