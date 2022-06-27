@@ -3,17 +3,11 @@
 
 * Doom Setup
 
-Place the following in ~~/.doom.d/config.el~ and uncomment it.
+Place the following in =~/.doom.d/config.el= and uncomment it.
 
 #+begin_src emacs-lisp
 ;; (package-initialize)
-;; (org-babel-load-file "~/dotfiles/doom-emacs/config.org")
-#+end_src
-
-And then set up a symlink for =packages.el=
-
-#+begin_src shell
-# ln -s /path/to/home/dir/.dotfiles/doom-emacs/packages.el /path/to/home/dir/.doom.d/packages.el
+;; (org-babel-load-file "~/.dotfiles/doom-emacs-ttrpg/config.org")
 #+end_src
 
 ** Identity
@@ -36,7 +30,8 @@ The opt/meta key wasn't working for me in emacs. I thought this was emacs relate
 Source: https://gitlab.com/howardabrams/emacs-rpgdm/
 
 #+begin_src emacs-lisp
-(add-to-list 'load-path "~/dotfiles/personal-emacs/emacs-rpgdm/")
+(add-to-list 'load-path "~/.dotfiles/doom-emacs-ttrpg/emacs-rpgdm/")
+(require 'rpgdm)
 #+end_src
 
 ** Theme

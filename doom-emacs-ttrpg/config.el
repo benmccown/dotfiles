@@ -1,10 +1,11 @@
 ;; (package-initialize)
-;; (org-babel-load-file "~/dotfiles/doom-emacs/config.org")
+;; (org-babel-load-file "~/.dotfiles/doom-emacs-ttrpg/config.org")
 
 (setq user-full-name "Ben McCown"
       user-mail-address "bmccown93@gmail.com")
 
-(add-to-list 'load-path "~/dotfiles/personal-emacs/emacs-rpgdm/")
+(add-to-list 'load-path "~/.dotfiles/doom-emacs-ttrpg/emacs-rpgdm/")
+(require 'rpgdm)
 
 (setq doom-theme 'doom-molokai)
 (setq display-line-numbers-type t)
