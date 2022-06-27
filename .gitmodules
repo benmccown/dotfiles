@@ -1,3 +1,6 @@
 [submodule "personal-emacs/emacs-rpgdm"]
-	path = personal-emacs/emacs-rpgdm
+	path = doom-emacs-ttrpg/emacs-rpgdm
 	url = git@github.com:benmccown/emacs-rpgdm.git
+[submodule "doom-emacs-work"]
+	path = doom-emacs-work/.emacs.d
+	url = https://github.com/hlissner/doom-emacs

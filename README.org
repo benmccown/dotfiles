@@ -1,0 +1,36 @@
+#+title: Readme
+
+* dotfiles
+
+Personal dotfiles and other configuration. Currently this repository only contains emacs config.
+
+Clone this repository into =~/.dotfiles=
+
+#+begin_src shell
+git clone git@github.com:benmccown/dotfiles.git ~/.dotfiles
+#+end_src
+
+* emacs Installation
+
+[[https://github.com/doomemacs/doomemacs/blob/develop/docs/getting_started.org#emacs--dependencies][Install emacs 28]].
+
+Clone and setup [[https://github.com/plexus/chemacs2][chemacs2]].
+
+#+begin_src shell
+[ -f ~/.emacs ] && mv ~/.emacs ~/.emacs.bak
+[ -d ~/.emacs.d ] && mv ~/.emacs.d ~/.emacs.default
+git clone https://github.com/plexus/chemacs2.git ~/.emacs.d
+#+end_src
+
+Symlink =~/.emacs-profiles.el=
+
+#+begin_src shell
+ln -s ~/.dotfiles/.emacs-profiles.el ~/
+#+end_src
+
+Doom sync each doom installation.
+
+#+begin_src shell
+DOOMDIR="~/.dotfiles/doom-emacs-work/.doom.d" ~/.dotfiles/doom-emacs-work/.emacs.d/bin/doom sync
+DOOMDIR="~/.dotfiles/doom-emacs-ttrpg/.doom.d" ~/.dotfiles/doom-emacs-ttrpg/.emacs.d/bin/doom sync
+#+end_src
