@@ -1,0 +1,10 @@
+{
+  "type": "worklog",
+  "frontmatterKeys": ["wl_status", "wl_priority", "wl_linear", "wl_captured_from"],
+  "recall": {
+    "inDefaultSearch": false,
+    "typeSearchable": true,
+    "hidden": true
+  },
+  "owner": "extension:worklog"
+}

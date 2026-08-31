@@ -1,0 +1,9 @@
+{
+  "name": "dotfiles-pi-brain-extensions",
+  "private": true,
+  "type": "module",
+  "description": "Ben's bespoke pi-brain extensions (loaded via ~/.config/pi-brain/extensions.d).",
+  "dependencies": {
+    "typebox": "^1.3.0"
+  }
+}
