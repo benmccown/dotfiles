@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # Devcontainer entrypoint. Runs as ROOT: sets up egress logging (allow-all, but
 # RECORD every host reached via dnsmasq query logging), then drops to `dev` to
-# seed pi config and exec the command.
+# exec the command. Your real pi config, MCP config, extensions, and Code dirs
+# are MOUNTED in at their host paths — this script does not copy or clobber them.
 #
 # Egress logging: dnsmasq becomes the container resolver and logs every DNS
-# query (all egress starts with one) to the egress log. Allow-all upstream — we
-# record, we don't block. After a few months the log IS your allowlist seed
-# (see egress-allowlist.sh). No TLS MITM, no proxy.
+# query (all egress starts with one). Allow-all upstream — record, don't block.
+# The log is the seed for a future allowlist (see egress-allowlist.sh).
 set -euo pipefail
 
 DEV_USER=dev
-DEV_HOME=/home/dev
-LOG_DIR="${PI_EGRESS_LOG_DIR:-/workspace/.pi-egress}"
+DEV_HOME=/Users/bmccown
+LOG_DIR="${PI_EGRESS_LOG_DIR:-$DEV_HOME/Code/.pi-egress}"
 EGRESS_LOG="$LOG_DIR/egress.log"
 
 # ---- privileged setup (root) ----
@@ -27,13 +27,14 @@ if [ "$(id -u)" -eq 0 ]; then
       echo "[pi-entrypoint] WARN: could not rewrite resolv.conf; egress not logged" >&2
     fi
   fi
-  # drop to dev for the rest
   exec setpriv --reuid="$DEV_USER" --regid="$DEV_USER" --init-groups \
        env HOME="$DEV_HOME" PI_EGRESS_LOG_DIR="$LOG_DIR" "$0" "$@"
 fi
 
 # ---- unprivileged (dev) ----
-# Seed pi provider -> the real NVIDIA endpoint. Key from env, never in the image.
+# gh auth uses $GITHUB_TOKEN from the env automatically. Your ~/.pi/agent (config,
+# installed packages, auth) and ~/.config/mcp are MOUNTED — nothing to seed.
+# Provider only seeded as a fallback if no mounted models.json exists.
 KEY="${PI_INFERENCE_KEY:-${NVIDIA_INFERENCE_API_KEY:-}}"
 PI_DIR="$HOME/.pi/agent"
 if [ -n "$KEY" ] && [ ! -f "$PI_DIR/models.json" ]; then
@@ -49,7 +50,7 @@ if [ -n "$KEY" ] && [ ! -f "$PI_DIR/models.json" ]; then
   }
 }
 JSON
-  echo "[pi-entrypoint] seeded nvidia-direct provider (inference-api.nvidia.com)"
+  echo "[pi-entrypoint] seeded fallback nvidia-direct provider (no mounted models.json)"
 fi
 
 exec "$@"
