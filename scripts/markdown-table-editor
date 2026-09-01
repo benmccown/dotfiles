@@ -1,0 +1,326 @@
+#!/usr/bin/env python3
+"""Interactive markdown table row approver.
+
+Point at a markdown file, pick a table, and approve/reject rows
+by pressing y/n. Updates the 'Approved?' column in-place.
+"""
+
+import argparse
+import re
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+
+COLORS = {
+    "reset": "\033[0m",
+    "bold": "\033[1m",
+    "dim": "\033[2m",
+    "green": "\033[32m",
+    "red": "\033[31m",
+    "yellow": "\033[33m",
+    "cyan": "\033[36m",
+    "magenta": "\033[35m",
+    "white": "\033[97m",
+    "bg_dark": "\033[48;5;236m",
+}
+
+C = COLORS
+
+
+def col(name: str, text: str) -> str:
+    return f"{C[name]}{text}{C['reset']}"
+
+
+def parse_row(line: str) -> list[str]:
+    """Split a markdown table row into cell values, stripping whitespace."""
+    line = line.strip()
+    if line.startswith("|"):
+        line = line[1:]
+    if line.endswith("|"):
+        line = line[:-1]
+    return [cell.strip() for cell in line.split("|")]
+
+
+def is_separator(cells: list[str]) -> bool:
+    return all(re.match(r"^-+$", c.strip()) for c in cells if c.strip())
+
+
+@dataclass
+class Table:
+    heading: str
+    header_cells: list[str]
+    rows: list[list[str]]
+    line_indices: list[int]  # original file line numbers for each row
+    separator_line: int
+    header_line: int
+    approved_col: int = -1
+
+    def find_approved_col(self) -> int:
+        for i, h in enumerate(self.header_cells):
+            if h.lower().strip().rstrip("?") == "approved":
+                return i
+        return -1
+
+    def __post_init__(self):
+        self.approved_col = self.find_approved_col()
+
+
+@dataclass
+class LogicalRow:
+    """A primary row plus any continuation rows (empty first cell)."""
+    primary: list[str]
+    primary_line: int
+    continuations: list[tuple[list[str], int]] = field(default_factory=list)
+
+
+def find_tables(lines: list[str]) -> list[Table]:
+    tables: list[Table] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        if not line.startswith("|") or line.count("|") < 3:
+            i += 1
+            continue
+
+        header_cells = parse_row(line)
+        header_line = i
+
+        if i + 1 >= len(lines):
+            i += 1
+            continue
+        sep_cells = parse_row(lines[i + 1])
+        if not is_separator(sep_cells):
+            i += 1
+            continue
+
+        separator_line = i + 1
+
+        heading = ""
+        for j in range(i - 1, max(i - 5, -1), -1):
+            stripped = lines[j].strip()
+            if stripped.startswith("#"):
+                heading = stripped.lstrip("#").strip()
+                break
+
+        rows = []
+        row_lines = []
+        k = i + 2
+        while k < len(lines):
+            rline = lines[k].strip()
+            if not rline.startswith("|"):
+                break
+            rows.append(parse_row(rline))
+            row_lines.append(k)
+            k += 1
+
+        tables.append(
+            Table(
+                heading=heading,
+                header_cells=header_cells,
+                rows=rows,
+                line_indices=row_lines,
+                separator_line=separator_line,
+                header_line=header_line,
+            )
+        )
+        i = k
+    return tables
+
+
+def group_logical_rows(table: Table) -> list[LogicalRow]:
+    """Group continuation rows (empty first cell) with their parent row."""
+    groups: list[LogicalRow] = []
+    for row, line_idx in zip(table.rows, table.line_indices):
+        if row[0].strip() == "" and groups:
+            groups[-1].continuations.append((row, line_idx))
+        else:
+            groups.append(LogicalRow(primary=row, primary_line=line_idx))
+    return groups
+
+
+def render_row(logical: LogicalRow, headers: list[str], approved_col: int) -> str:
+    """Pretty-print a logical row for terminal display."""
+    out: list[str] = []
+    cells = logical.primary
+
+    skip_cols = {approved_col} if approved_col >= 0 else set()
+
+    for i, (header, value) in enumerate(zip(headers, cells)):
+        if i in skip_cols or not value.strip():
+            continue
+        label = col("cyan", f"{header}:")
+        out.append(f"  {label} {value}")
+
+    for cont, _ in logical.continuations:
+        summary_col = next(
+            (j for j, h in enumerate(headers) if h.lower() in ("summary", "fix", "claim", "why rejected")),
+            None,
+        )
+        if summary_col is not None and summary_col < len(cont) and cont[summary_col].strip():
+            text = cont[summary_col].strip()
+            out.append(f"  {col('dim', text)}")
+        else:
+            combined = " ".join(c for c in cont if c.strip())
+            if combined:
+                out.append(f"  {col('dim', combined)}")
+
+    return "\n".join(out)
+
+
+def rebuild_row_line(cells: list[str]) -> str:
+    return "| " + " | ".join(cells) + " |"
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Interactively approve markdown table rows")
+    parser.add_argument("file", type=Path, help="Markdown file to process")
+    parser.add_argument("--only-empty", action="store_true", default=True,
+                        help="Only prompt for rows without an existing approval (default)")
+    parser.add_argument("--all", action="store_true", dest="show_all",
+                        help="Prompt for all rows, even already-approved ones")
+    args = parser.parse_args()
+
+    if not args.file.exists():
+        print(f"File not found: {args.file}", file=sys.stderr)
+        sys.exit(1)
+
+    text = args.file.read_text()
+    lines = text.splitlines(keepends=True)
+
+    tables = find_tables([l.rstrip("\n") for l in lines])
+    if not tables:
+        print("No markdown tables found.", file=sys.stderr)
+        sys.exit(1)
+
+    approvable = [(i, t) for i, t in enumerate(tables) if t.approved_col >= 0]
+    all_tables = [(i, t) for i, t in enumerate(tables)]
+
+    if not approvable:
+        print("No tables with an 'Approved?' column found.", file=sys.stderr)
+        print(f"Tables detected ({len(tables)}):")
+        for i, t in enumerate(tables):
+            cols_preview = ", ".join(t.header_cells[:4])
+            print(f"  [{i}] {t.heading or '(untitled)'} — columns: {cols_preview}...")
+        sys.exit(1)
+
+    print(col("bold", f"\nFound {len(approvable)} table(s) with 'Approved?' column:\n"))
+    for idx, (orig_i, t) in enumerate(approvable):
+        logical = group_logical_rows(t)
+        primary_count = len(logical)
+        already = sum(
+            1 for lg in logical
+            if t.approved_col < len(lg.primary) and lg.primary[t.approved_col].strip()
+        )
+        status = f"{already}/{primary_count} approved"
+        print(f"  {col('yellow', f'[{idx}]')} {t.heading or '(untitled)'} — {primary_count} rows ({status})")
+
+    print()
+    if len(approvable) == 1:
+        choice = 0
+        print(f"Auto-selecting the only table: {approvable[0][1].heading or '(untitled)'}")
+    else:
+        try:
+            raw = input(col("bold", "Which table? ")).strip()
+            choice = int(raw)
+        except (ValueError, EOFError):
+            print("Invalid selection.", file=sys.stderr)
+            sys.exit(1)
+
+    if choice < 0 or choice >= len(approvable):
+        print(f"Invalid index. Choose 0–{len(approvable) - 1}.", file=sys.stderr)
+        sys.exit(1)
+
+    _, table = approvable[choice]
+    logical_rows = group_logical_rows(table)
+
+    skip_already = not args.show_all
+    to_review = []
+    for lg in logical_rows:
+        current = lg.primary[table.approved_col] if table.approved_col < len(lg.primary) else ""
+        if skip_already and current.strip():
+            continue
+        to_review.append(lg)
+
+    if not to_review:
+        print(col("green", "\nAll rows already have approvals. Use --all to re-review."))
+        sys.exit(0)
+
+    print(col("bold", f"\n{len(to_review)} row(s) to review. Press y/n/s(kip)/q(uit).\n"))
+    print("─" * 72)
+
+    changes: list[tuple[int, str]] = []  # (line_index, new_value)
+
+    for num, lg in enumerate(to_review, 1):
+        print(f"\n{col('bold', f'[{num}/{len(to_review)}]')}")
+        print(render_row(lg, table.header_cells, table.approved_col))
+        print()
+
+        while True:
+            try:
+                answer = input(f"  {col('green', 'y')}es / {col('red', 'n')}o / {col('yellow', 's')}kip / {col('magenta', 'q')}uit → ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print("\nAborted.")
+                sys.exit(1)
+
+            if answer in ("y", "yes"):
+                changes.append((lg.primary_line, "Yes"))
+                print(f"  → {col('green', 'Approved')}")
+                break
+            elif answer in ("n", "no"):
+                changes.append((lg.primary_line, "No"))
+                print(f"  → {col('red', 'Rejected')}")
+                break
+            elif answer in ("s", "skip"):
+                print(f"  → {col('yellow', 'Skipped')}")
+                break
+            elif answer in ("q", "quit"):
+                print()
+                if changes:
+                    try:
+                        save = input(f"Save {len(changes)} change(s) before quitting? (y/n) ").strip().lower()
+                    except (EOFError, KeyboardInterrupt):
+                        print("\nDiscarded.")
+                        sys.exit(1)
+                    if save in ("y", "yes"):
+                        break
+                print("Discarded.")
+                sys.exit(0)
+            else:
+                print(f"  {col('dim', 'Press y, n, s, or q')}")
+
+        if answer in ("q", "quit"):
+            break
+
+        print("─" * 72)
+
+    if not changes:
+        print("\nNo changes to save.")
+        sys.exit(0)
+
+    raw_lines = text.splitlines(keepends=True)
+    needs_final_newline = text.endswith("\n")
+
+    for line_idx, value in changes:
+        raw = raw_lines[line_idx]
+        trailing = "\n" if raw.endswith("\n") else ""
+        cells = parse_row(raw.rstrip("\n"))
+
+        while len(cells) <= table.approved_col:
+            cells.append("")
+        cells[table.approved_col] = value
+
+        raw_lines[line_idx] = rebuild_row_line(cells) + trailing
+
+    output = "".join(raw_lines)
+    if needs_final_newline and not output.endswith("\n"):
+        output += "\n"
+
+    args.file.write_text(output)
+
+    yes_count = sum(1 for _, v in changes if v == "Yes")
+    no_count = sum(1 for _, v in changes if v == "No")
+    print(f"\n{col('bold', 'Saved')} — {col('green', f'{yes_count} approved')}, {col('red', f'{no_count} rejected')} → {args.file}")
+
+
+if __name__ == "__main__":
+    main()

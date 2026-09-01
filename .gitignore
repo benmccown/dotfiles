@@ -3,3 +3,7 @@ node_modules/
 # Cloned checkouts (large, not committed) — e.g. the nemo-platform run-copy
 # that platform.sh manages. See nemo-platform/README.md.
 .repos/
+
+# secrets never live in the repo
+secrets.env
+*.pre-dotfiles.*

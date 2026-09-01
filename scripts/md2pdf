@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+#
+# md2pdf — render a Markdown file to PDF using pandoc + WeasyPrint.
+#
+# Default output is alongside the input (foo.md -> foo.pdf). Use a custom
+# stylesheet at ~/.scripts/md2pdf-style.css; override with --css.
+#
+# Usage:
+#   md2pdf [options] <input.md>
+#
+# Options:
+#   -o, --output PATH      Output PDF path (default: <input>.pdf)
+#   -c, --css PATH         CSS stylesheet (default: ~/.scripts/md2pdf-style.css)
+#   -s, --page-size SIZE   CSS @page size (e.g. Letter, A4, A3, "11in 14in")
+#                          Overrides the size declared in the stylesheet.
+#                          (default: whatever the stylesheet says)
+#       --no-open          Don't open the PDF in Preview after building
+#   -h, --help             Show this help
+#       --version          Show version and exit
+#
+# Examples:
+#   md2pdf README.md                              # README.pdf next to README.md
+#   md2pdf -o /tmp/out.pdf notes.md
+#   md2pdf --page-size A4 report.md
+#   md2pdf --css ~/my-style.css report.md
+#
+# Dependencies (one-time install on macOS):
+#   brew install pandoc pango gdk-pixbuf libffi
+#   uv tool install weasyprint
+
+set -euo pipefail
+
+VERSION="1.0.0"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_CSS="${SCRIPT_DIR}/md2pdf-style.css"
+
+usage() {
+  sed -n '3,/^$/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+}
+
+die() {
+  echo "md2pdf: $*" >&2
+  exit 1
+}
+
+# WeasyPrint on Apple Silicon needs to dlopen libgobject/libpango/libcairo
+# from /opt/homebrew/lib. macOS doesn't search there by default. Setting the
+# fallback lib path is harmless on Linux (the var simply isn't used).
+if [[ "$(uname)" == "Darwin" ]]; then
+  export DYLD_FALLBACK_LIBRARY_PATH="/opt/homebrew/lib:${DYLD_FALLBACK_LIBRARY_PATH:-}"
+fi
+
+# ---------- arg parsing ----------
+
+INPUT=""
+OUTPUT=""
+CSS=""
+PAGE_SIZE=""
+OPEN_AFTER=1
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --version)
+      echo "md2pdf ${VERSION}"
+      exit 0
+      ;;
+    -o|--output)
+      [[ $# -ge 2 ]] || die "$1 requires an argument"
+      OUTPUT="$2"
+      shift 2
+      ;;
+    -c|--css)
+      [[ $# -ge 2 ]] || die "$1 requires an argument"
+      CSS="$2"
+      shift 2
+      ;;
+    -s|--page-size)
+      [[ $# -ge 2 ]] || die "$1 requires an argument"
+      PAGE_SIZE="$2"
+      shift 2
+      ;;
+    --no-open)
+      OPEN_AFTER=0
+      shift
+      ;;
+    --)
+      shift
+      [[ $# -ge 1 ]] || die "expected input file after --"
+      INPUT="$1"
+      shift
+      break
+      ;;
+    -*)
+      die "unknown option: $1 (try --help)"
+      ;;
+    *)
+      if [[ -z "$INPUT" ]]; then
+        INPUT="$1"
+        shift
+      else
+        die "unexpected positional argument: $1 (already have input '$INPUT')"
+      fi
+      ;;
+  esac
+done
+
+[[ -n "$INPUT" ]] || { usage; exit 1; }
+[[ -f "$INPUT" ]] || die "input file not found: $INPUT"
+
+# Resolve INPUT to absolute path so --resource-path picks up the right base
+INPUT_ABS="$(cd "$(dirname "$INPUT")" && pwd)/$(basename "$INPUT")"
+INPUT_DIR="$(dirname "$INPUT_ABS")"
+
+# Default output: same directory as input, .pdf extension
+if [[ -z "$OUTPUT" ]]; then
+  OUTPUT="${INPUT_ABS%.*}.pdf"
+fi
+
+# Default CSS: sibling of this script
+if [[ -z "$CSS" ]]; then
+  CSS="$DEFAULT_CSS"
+fi
+[[ -f "$CSS" ]] || die "stylesheet not found: $CSS"
+
+# ---------- dependency check ----------
+
+missing=()
+for tool in pandoc weasyprint; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    missing+=("$tool")
+  fi
+done
+
+if [[ ${#missing[@]} -gt 0 ]]; then
+  echo "md2pdf: missing required tool(s): ${missing[*]}" >&2
+  echo "" >&2
+  echo "Install on macOS:" >&2
+  echo "  brew install pandoc pango gdk-pixbuf libffi" >&2
+  echo "  uv tool install weasyprint" >&2
+  exit 127
+fi
+
+# ---------- build ----------
+
+# If --page-size was passed, splice it in by overriding @page size via an
+# extra inline stylesheet. We keep the user's CSS intact and just append a
+# higher-specificity @page rule.
+#
+# WeasyPrint sniffs the content-type by file extension, so the override file
+# MUST end in .css. macOS `mktemp -t` appends a random suffix to the end of
+# the template (rather than substituting XXXXXX), which would produce a path
+# like `pagesize.XXXXXX.css.aB3xY9` — type sniffed as text/plain and silently
+# ignored. So we make a temp DIR and put a fixed-name .css file inside it.
+EXTRA_CSS=""
+if [[ -n "$PAGE_SIZE" ]]; then
+  TMPDIR_FOR_CSS="$(mktemp -d -t md2pdf.XXXXXX)"
+  trap 'rm -rf "$TMPDIR_FOR_CSS"' EXIT
+  EXTRA_CSS="$TMPDIR_FOR_CSS/page-size.css"
+  printf '@page { size: %s; }\n' "$PAGE_SIZE" >"$EXTRA_CSS"
+fi
+
+CSS_ARGS=(--css "$CSS")
+if [[ -n "$EXTRA_CSS" ]]; then
+  CSS_ARGS+=(--css "$EXTRA_CSS")
+fi
+
+echo "md2pdf: $INPUT_ABS -> $OUTPUT"
+
+pandoc \
+  "$INPUT_ABS" \
+  --pdf-engine=weasyprint \
+  "${CSS_ARGS[@]}" \
+  --resource-path="$INPUT_DIR" \
+  --standalone \
+  -o "$OUTPUT"
+
+SIZE_BYTES="$(wc -c <"$OUTPUT" | tr -d ' ')"
+SIZE_KB=$(( SIZE_BYTES / 1024 ))
+echo "md2pdf: wrote $OUTPUT (${SIZE_KB} KiB)"
+
+if [[ $OPEN_AFTER -eq 1 ]] && [[ "$(uname)" == "Darwin" ]]; then
+  open "$OUTPUT"
+fi

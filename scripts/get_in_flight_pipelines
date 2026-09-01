@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# Check if the environment argument is provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <env>"
+    echo "Please specify the environment: dev or prod"
+    echo "You may also specify the YAML file name directly: release.yml"
+    exit 1
+fi
+
+# Set the YAML file based on the environment argument
+env="$1"
+if [ "$env" == "dev" ]; then
+    yaml_file="release-dev.yml"
+elif [ "$env" == "prod" ]; then
+    yaml_file="release-prod.yml"
+else
+    yaml_file="$env"
+fi
+
+# List of non terminal statuses
+statuses=("queued" "in_progress" "requested" "waiting" "action_required")
+
+# Temporary file to store the aggregated results
+temp_file=$(mktemp)
+
+# Initialize an empty JSON array
+echo "[]" >"$temp_file"
+
+# Run the command for each status and append the results to the temporary file
+for status in "${statuses[@]}"; do
+    results=$(gh run list -w "$yaml_file" -s "$status" --json displayTitle,status,url,createdAt)
+    jq -s '.[0] + .[1]' "$temp_file" <(echo "$results") >"${temp_file}.tmp" && mv "${temp_file}.tmp" "$temp_file"
+done
+
+# Use jq to format the aggregated results into a table, sorted by createdAt
+jq -r '
+    ["Display Title", "Status", "URL", "Created At"],
+    ["-------------", "------", "---", "----------"],
+    (sort_by(.createdAt) | reverse | .[] | [.displayTitle, .status, .url, .createdAt])
+    | @tsv
+' "$temp_file" | column -t -s $'\t'
+
+# Clean up the temporary file
+rm "$temp_file"

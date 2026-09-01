@@ -1,0 +1,180 @@
+/* md2pdf default stylesheet. Override with `md2pdf --css <file>`. */
+
+@page {
+  /* A4 portrait by default. Override with `md2pdf --page-size <size>`,
+   * e.g. `md2pdf --page-size Letter` or `--page-size "11in 14in"`. */
+  size: A4 portrait;
+  margin: 0.7in 0.85in 0.85in 0.85in;
+
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    font-size: 8pt;
+    color: #888;
+  }
+  @bottom-left {
+    content: string(doc-title);
+    font-size: 8pt;
+    color: #888;
+  }
+}
+
+/* Capture the document's H1 into a string so the running footer can show it */
+h1 {
+  string-set: doc-title content();
+}
+
+html {
+  font-family: -apple-system, "Helvetica Neue", "Segoe UI", "Roboto", sans-serif;
+  font-size: 11pt;
+  line-height: 1.5;
+  color: #111;
+}
+
+body {
+  margin: 0;
+}
+
+h1 {
+  font-size: 22pt;
+  margin-top: 0;
+  margin-bottom: 0.2em;
+  border-bottom: 2px solid #222;
+  padding-bottom: 0.2em;
+}
+
+h2 {
+  font-size: 15pt;
+  margin-top: 1.4em;
+  margin-bottom: 0.3em;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.15em;
+  page-break-after: avoid;
+}
+
+h3 {
+  font-size: 12pt;
+  margin-top: 1.0em;
+  margin-bottom: 0.2em;
+  page-break-after: avoid;
+}
+
+h4 {
+  font-size: 11pt;
+  margin-top: 0.8em;
+  page-break-after: avoid;
+}
+
+p {
+  margin: 0.5em 0;
+  orphans: 2;
+  widows: 2;
+}
+
+a {
+  color: #0a58ca;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Inline code */
+code {
+  font-family: "SF Mono", "Menlo", "Consolas", monospace;
+  font-size: 0.88em;
+  background: #f4f4f4;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 1px solid #e6e6e6;
+}
+
+/* Code blocks */
+pre {
+  font-family: "SF Mono", "Menlo", "Consolas", monospace;
+  font-size: 8.5pt;
+  line-height: 1.35;
+  background: #f6f8fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 10px;
+  overflow: hidden;
+  page-break-inside: avoid;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* Block quotes */
+blockquote {
+  border-left: 3px solid #bbb;
+  padding: 0.2em 0.8em;
+  margin: 0.6em 0;
+  color: #444;
+  background: #fafafa;
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.6em 0;
+  font-size: 9pt;
+  page-break-inside: avoid;
+}
+thead {
+  background: #f0f0f0;
+}
+th, td {
+  border: 1px solid #ddd;
+  padding: 4px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  font-weight: 600;
+}
+td[align="right"], th[align="right"] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lists */
+ul, ol {
+  padding-left: 1.5em;
+  margin: 0.4em 0;
+}
+li {
+  margin: 0.15em 0;
+}
+li > p {
+  margin: 0.15em 0;
+}
+
+/* Images */
+img {
+  max-width: 100%;
+  height: auto;
+  page-break-inside: avoid;
+}
+a img {
+  border: none;
+}
+
+/* Horizontal rules */
+hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 1.2em 0;
+}
+
+strong {
+  font-weight: 700;
+}
+em {
+  font-style: italic;
+}

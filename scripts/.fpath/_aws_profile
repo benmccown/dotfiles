@@ -1,0 +1,4 @@
+#compdef aws-profile
+
+PROFILES=($(cat ~/.aws/config | grep '\[profile' | sed -n 's/\[profile \(.*\).*\]/\1/p' | sort))
+compadd ${PROFILES[@]}

@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+
+# Function to print help message
+print_help() {
+    echo "Usage: $0 <subcommand> [options]"
+    echo "Subcommands:"
+    echo "  list-roles             List available IAM roles"
+    echo "  assume-role -r <role_name> -s <session_name> [-a <aws_account_id>]"
+    echo "                         Assume the specified role and set AWS credentials"
+    exit 1
+}
+
+# Function to list available IAM roles
+list_roles() {
+    echo "Available IAM Roles:"
+    aws iam list-roles --query "Roles[].RoleName" --output text | tr '\t' '\n'
+}
+
+# Function to print commands to set environment variables
+print_export_commands() {
+    echo "export AWS_ACCESS_KEY_ID=$1"
+    echo "export AWS_SECRET_ACCESS_KEY=$2"
+    echo "export AWS_SESSION_TOKEN=$3"
+}
+
+# Function to assume role and set credentials
+assume_role() {
+    local ROLE=""
+    local SESSION=""
+    local AWS_ACCOUNT_ID=""
+
+    while getopts "r:s:a:" opt; do
+        case $opt in
+            r)
+                ROLE="$OPTARG"
+                ;;
+            s)
+                SESSION="$OPTARG"
+                ;;
+            a)
+                AWS_ACCOUNT_ID="$OPTARG"
+                ;;
+            \?)
+                print_help
+                ;;
+        esac
+    done
+
+    if [ -z "$ROLE" ] || [ -z "$SESSION" ]; then
+        print_help
+    fi
+
+    if [ -z "$AWS_ACCOUNT_ID" ]; then
+        ACCOUNT_ID=$(aws sts get-caller-identity --output json | jq -r .Account)
+    else
+        ACCOUNT_ID="$AWS_ACCOUNT_ID"
+    fi
+
+    echo "Assuming role '$ROLE' in AWS account '$ACCOUNT_ID' with session name '$SESSION..."
+
+    CREDENTIALS=$(aws sts assume-role --role-arn arn:aws:iam::$ACCOUNT_ID:role/$ROLE --role-session-name $SESSION)
+
+    print_export_commands \
+    "$(echo $CREDENTIALS | jq -r .Credentials.AccessKeyId)" \
+    "$(echo $CREDENTIALS | jq -r .Credentials.SecretAccessKey)" \
+    "$(echo $CREDENTIALS | jq -r .Credentials.SessionToken)"
+
+    echo "You are now authenticated as '$SESSION' in role '$ROLE'. Paste the above export lines into your current shell to use these credentials."
+}
+
+# Main script
+
+if [ $# -eq 0 ]; then
+    print_help
+fi
+
+case $1 in
+    list-roles)
+        list_roles
+        ;;
+    assume-role)
+        shift
+        assume_role "$@"
+        ;;
+    *)
+        print_help
+        ;;
+esac
+
+exit 0
+

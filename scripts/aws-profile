@@ -1,0 +1,19 @@
+#!/bin/zsh
+
+PROFILES=($(cat ~/.aws/config | grep '\[profile' | sed -n 's/\[profile \(.*\).*\]/\1/p' | sort))
+
+if [ -z "$1" ];  then
+    echo "Pass profile name as an argument. Mayhaps one of these?"
+    echo
+    printf '%s\n' "${PROFILES[@]}"
+    exit 1
+fi
+
+if [[ ! " ${PROFILES[@]} " =~ " ${1} " ]]; then
+    echo "Cowardly refusing to open AWS SHELL for profile $1"
+    echo "No such profile in ~/.aws/profile"
+    exit 1
+fi
+
+autoload -U colors && colors
+exec env AWS_DEFAULT_PROFILE=$1 PS1_APPEND="${reset}%{$fg_bold[green]%}aws:(%{$fg[red]%}${1}%{$fg[green]%})${reset}" zsh

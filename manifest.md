@@ -19,13 +19,15 @@ idempotent reconciler so desired-state → current-state is safe to re-run.
 
 ## Components
 
-| component | desired state | reconciler | post-step |
-|---|---|---|---|
-| MCP servers | `mcp/servers.json` | `mcp/sync-mcp.sh [--dry-run] [--only a,b]` | `/mcp-auth` in pi |
-| pi devcontainer | `pi-devcontainer/` | `pi-devcontainer/install.sh [project]` | set `NVIDIA_INFERENCE_API_KEY`; open in container |
-| nemo-platform dogfood | `nemo-platform/` | `nemo-platform/platform.sh up` | needs `NVIDIA_INFERENCE_API_KEY` |
-| pi-brain worklog ext | `pi-brain/extensions.d/worklog/` | (copy into pi extensions dir) | — |
+| component | desired state | reconciler | post-step | audience |
+|---|---|---|---|---|
+| shell + scripts + config | `home/` `scripts/` `config/` | `link.sh [--dry-run]` | populate `~/.config/secrets.env` | personal |
+| MCP servers | `mcp/servers.json` | `mcp/sync-mcp.sh [--dry-run] [--only a,b]` | `/mcp-auth` in pi | shareable |
+| pi devcontainer | `pi-devcontainer/` | `pi-devcontainer/install.sh [project]` | set `NVIDIA_INFERENCE_API_KEY`; open in container | shareable |
+| nemo-platform dogfood | `nemo-platform/` | `nemo-platform/platform.sh up` | needs `NVIDIA_INFERENCE_API_KEY` | personal |
+| pi-brain worklog ext | `pi-brain/extensions.d/worklog/` | (copy into pi extensions dir) | — | shareable |
 
-When you add a new component to dotfiles, add a row here with its reconciler
-and any post-install auth/secret step — that's what keeps ONBOARDING and
-REDEPLOY complete without editing either of them.
+When you add a new component to dotfiles, add a row here with its reconciler,
+any post-install auth/secret step, and its **audience** (`shareable` = offer to
+colleagues normally; `personal` = Ben's own, default-skip in ONBOARDING) — that's
+what keeps ONBOARDING and REDEPLOY complete without editing either of them.

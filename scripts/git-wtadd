@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+QUIET=0
+BRANCH=""
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS] [BRANCH]
+
+Create a git worktree for the given branch.
+
+If BRANCH doesn't exist locally, it will be created from main.
+The worktree is placed at <repo>.worktrees/<branch-name>.
+
+Without -q, the script also:
+  - Runs \`uv sync\` in the new worktree
+  - Opens a new Cursor window for the worktree
+
+Options:
+  -h, --help    Show this help message and exit
+  -q, --quiet   Only create the worktree (skip uv sync and Cursor)
+
+Examples:
+  $(basename "$0") my-feature/bmccown
+  $(basename "$0") -q 1234-fix-bug/bmccown
+  $(basename "$0")                          # prompts for branch name
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help) usage; exit 0 ;;
+        -q|--quiet) QUIET=1; shift ;;
+        -*) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
+        *) BRANCH="$1"; shift ;;
+    esac
+done
+
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+    echo "Error: not inside a git repository." >&2
+    exit 1
+fi
+
+repo_root=$(git rev-parse --show-toplevel)
+worktree_base="${repo_root}.worktrees"
+
+if [[ -z "$BRANCH" ]]; then
+    read -rp "Branch name: " BRANCH </dev/tty
+    if [[ -z "$BRANCH" ]]; then
+        echo "No branch name provided." >&2
+        exit 1
+    fi
+fi
+
+worktree_path="${worktree_base}/${BRANCH}"
+
+if git worktree list --porcelain | grep -q "^worktree ${worktree_path}$"; then
+    echo "Worktree already exists at: $worktree_path"
+    if [[ $QUIET -eq 0 ]]; then
+        echo "Opening Cursor..."
+        cursor "$worktree_path"
+    fi
+    exit 0
+fi
+
+existing_wt=$(git worktree list --porcelain | grep -B1 "^branch refs/heads/${BRANCH}$" | grep '^worktree ' | sed 's/^worktree //' || true)
+if [[ -n "$existing_wt" ]]; then
+    echo "Error: branch '$BRANCH' is already checked out in: $existing_wt" >&2
+    exit 1
+fi
+
+branch_created=0
+if git show-ref --verify --quiet "refs/heads/${BRANCH}"; then
+    echo "Using existing branch: $BRANCH"
+else
+    echo "Creating branch '$BRANCH' from main..."
+    if ! git show-ref --verify --quiet "refs/heads/main"; then
+        echo "Error: local 'main' branch not found." >&2
+        exit 1
+    fi
+    git branch "$BRANCH" main
+    branch_created=1
+fi
+
+echo "Creating worktree at: $worktree_path"
+mkdir -p "$(dirname "$worktree_path")"
+
+if ! git worktree add "$worktree_path" "$BRANCH"; then
+    echo "Error: failed to create worktree." >&2
+    if [[ $branch_created -eq 1 ]]; then
+        echo "Cleaning up branch '$BRANCH'..."
+        git branch -D "$BRANCH" 2>/dev/null || true
+    fi
+    exit 1
+fi
+
+if git show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
+    git -C "$worktree_path" branch --set-upstream-to="origin/${BRANCH}" 2>/dev/null && \
+        echo "Tracking: origin/$BRANCH"
+fi
+
+echo ""
+
+if [[ $QUIET -eq 0 ]]; then
+    echo "Running uv sync..."
+    ( cd "$worktree_path" && uv sync ) || echo "Warning: uv sync failed." >&2
+    echo ""
+    echo "Opening Cursor..."
+    cursor "$worktree_path"
+    echo ""
+fi
+
+echo "Done. Worktree ready at: $worktree_path"

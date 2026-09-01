@@ -1,0 +1,711 @@
+k9s:
+  refreshRate: 2
+  maxConnRetry: 5
+  enableMouse: false
+  headless: false
+  logoless: false
+  crumbsless: false
+  readOnly: false
+  noExitOnCtrlC: false
+  noIcons: false
+  skipLatestRevCheck: false
+  logger:
+    tail: 100
+    buffer: 5000
+    sinceSeconds: 900
+    fullScreenLogs: false
+    textWrap: true
+    showTime: false
+  currentContext: svrls-wus3-dev-1-cluster
+  currentCluster: svrls-wus3-dev-1-cluster
+  clusters:
+    arn:aws:eks:us-west-2:074762682575:cluster/cloud-api-prod-pdx:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - all
+        - default
+      view:
+        active: service
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:074762682575:cluster/cloud-gcc-prod-pdx:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - all
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:418741756720:cluster/gretel-hybrid-dev-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-hybrid
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:418741756720:cluster/gretel-hybrid-sandbox-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-hybrid
+        - all
+        - default
+      view:
+        active: pod
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:524473328983:cluster/cloud-api-dev-pdx:
+      namespace:
+        active: gretel-api
+        lockFavorites: false
+        favorites:
+        - woodhouse
+        - gretel-inference
+        - gretel-api
+        - all
+        - default
+      view:
+        active: contexts
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:524473328983:cluster/cloud-gcc-dev-pdx:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - gretel-compute
+        - all
+        - default
+      view:
+        active: pod
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:524473328983:cluster/hadron-dev-pdx:
+      namespace:
+        active: gretel-workers
+        lockFavorites: false
+        favorites:
+        - gretel-system
+        - all
+        - gretel-workers
+        - default
+      view:
+        active: pod
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:524473328983:cluster/srvls-us-west-2-dev-1:
+      namespace:
+        active: tenant-sandbox-6785-aws
+        lockFavorites: false
+        favorites:
+        - tenant-sandbox-6802-aws
+        - tenant-sandbox-6785-aws
+        - all
+        - envoy-gateway-system
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:554531323765:cluster/gretel-hybrid-demo:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-hybrid
+        - default
+      view:
+        active: deployments
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:554531323765:cluster/platform-cluster-pdx:
+      namespace:
+        active: monitoring
+        lockFavorites: false
+        favorites:
+        - datadog
+        - monitoring
+        - bazel-cache
+        - cert-manager
+        - all
+        - github-ci
+        - kube-system
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:617315122259:cluster/ben-hbd-sbx-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-hybrid
+        - all
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:617315122259:cluster/ben-hybrid-sbx-cluster:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - all
+        - default
+      view:
+        active: context
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:617315122259:cluster/gretel-hybrid-env-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - kube-system
+        - gretel-hybrid
+        - all
+        - default
+      view:
+        active: context
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    arn:aws:eks:us-west-2:617315122259:cluster/seattle-hybrid-demo:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - all
+        - default
+      view:
+        active: pod
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    ben-hbd-sbx-cluster:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gke_dev-hybrid-project_us-central1_ben-docs-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-hybrid
+        - default
+      view:
+        active: pod
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gke_dev-hybrid-project_us-central1_ben-hbd-sbx-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-hybrid
+        - default
+      view:
+        active: pod
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gke_dev-hybrid-project_us-central1_ben-hybrid-sbx-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-hybrid
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gke_dev-hybrid-project_us-central1_hybrid-dev-cluster:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - all
+        - gretel-hybrid
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gke_dev-hybrid-project_us-central1_travis-hybrid-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-hybrid
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gke_dev-hybrid-project_us-east4_ben-test-autopilot:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gke_production-hybrid-project_us-central1_gretel-hybrid-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - all
+        - kube-system
+        - gretel-hybrid
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gke_production-hybrid-project_us-central1_hybrid-demo-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-hybrid
+        - all
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gke_production-hybrid-project_us-central1_hybrid-prod-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-hybrid
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gretel-hybrid-az-prod-cluster:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - all
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gretel-hybrid-dev-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - gretel-serverless-hybrid
+        - all
+        - gretel-hybrid
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    gretel-hybrid-env-cluster:
+      namespace:
+        active: gretel-hybrid
+        lockFavorites: false
+        favorites:
+        - nvidia-device-plugin
+        - all
+        - kube-system
+        - gretel-hybrid
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    kind-kind:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - monitoring
+        - all
+        - default
+      view:
+        active: context
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    serverless-westus3-prod-1-cluster:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - default
+      view:
+        active: po
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    svrls-scus-dev-1-cluster:
+      namespace:
+        active: all
+        lockFavorites: false
+        favorites:
+        - all
+        - default
+      view:
+        active: ns
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+    svrls-wus3-dev-1-cluster:
+      namespace:
+        active: tenant-sandbox-6966-azure
+        lockFavorites: false
+        favorites:
+        - tenant-sandbox-6966-azure
+        - tenant-sandbox-6916-azure
+        - cell-system
+        - tenant-demo-tenant-1
+        - envoy-gateway-system
+        - all
+        - default
+      view:
+        active: pods
+      featureGates:
+        nodeShell: false
+      shellPod:
+        image: busybox:1.35.0
+        command: []
+        args: []
+        namespace: default
+        limits:
+          cpu: 100m
+          memory: 100Mi
+        labels: {}
+      portForwardAddress: localhost
+  thresholds:
+    cpu:
+      critical: 90
+      warn: 70
+    memory:
+      critical: 90
+      warn: 70
+  screenDumpDir: /var/folders/dm/rrq7f_997t59yj7yvb9426vw0000gn/T/k9s-screens-benjaminmccown

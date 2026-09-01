@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+aws sso login
+docker-login dev
+docker-login legacy-dev
+docker-login prod

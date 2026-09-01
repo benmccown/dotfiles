@@ -1,0 +1,180 @@
+#!/bin/bash
+
+# DMS Development Loop Script
+# Usage: devbuild <build-type> [additional-args]
+# Examples:
+#   devbuild service <pod-name> <build-target>
+#   devbuild service <pod-name> <build-target> --skip-helm
+#   devbuild chart <pod-name> <chart-version> <container-version>
+
+set -euo pipefail
+
+# Check arguments
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <build-type> [additional-args]"
+    echo "Build types:"
+    echo "  service <pod-name> <build-target> [--skip-helm]  - Build and deploy service"
+    echo "  chart <pod-name> <chart-version> <container-version>  - Build the EA chart and copy to pod"
+    echo ""
+    echo "Examples:"
+    echo "  $0 service gpu-container deployment-management-docker"
+    echo "  $0 service gpu-container deployment-management-docker --skip-helm"
+    echo "  $0 chart gpu-container 25.07 25.07"
+    exit 1
+fi
+
+BUILD_TYPE="$1"
+shift
+
+case "$BUILD_TYPE" in
+"service")
+    # Check arguments for service build
+    if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+        echo "Usage: $0 service <pod-name> <build-target> [--skip-helm]"
+        echo "Example: $0 service gpu-container deployment-management-docker"
+        echo "Example: $0 service gpu-container deployment-management-docker --skip-helm"
+        exit 1
+    fi
+
+    POD_NAME="$1"
+    BUILD_TARGET="$2"
+    SKIP_HELM=false
+
+    # Check for --skip-helm flag
+    if [ $# -eq 3 ] && [ "$3" = "--skip-helm" ]; then
+        SKIP_HELM=true
+    fi
+    TAR_FILE="${BUILD_TARGET//-/_}_local.tar"
+
+    echo "🚀 Starting DMS development loop..."
+    echo "Pod: $POD_NAME"
+    echo "Build target: $BUILD_TARGET"
+    echo "Tar file: $TAR_FILE"
+
+    # Step 1: Build the Docker image
+    echo "� Building Docker image..."
+    docker buildx bake "$BUILD_TARGET" --load --set "*.platform=linux/amd64"
+
+    # Step 2: Save the image as tar
+    echo "� Saving image as tar file..."
+    docker save my-registry/deployment-management:local -o "$TAR_FILE"
+
+    # Step 3: Check if we need to copy the tar file
+    echo "� Checking if tar file has changed..."
+    LOCAL_SHA=$(sha256sum "$TAR_FILE" | cut -d' ' -f1)
+    REMOTE_SHA=$(kubectl exec "$POD_NAME" -- bash -c "sha256sum /root/$TAR_FILE 2>/dev/null | cut -d' ' -f1" || echo "")
+
+    if [ "$LOCAL_SHA" = "$REMOTE_SHA" ] && [ -n "$REMOTE_SHA" ]; then
+        echo "✅ Tar file unchanged, skipping copy..."
+    else
+        echo "📤 Copying tar file to pod..."
+        kubectl cp "$TAR_FILE" "$POD_NAME:/root/"
+        echo "📥 Loading image in pod..."
+        kubectl exec "$POD_NAME" -- minikube image load "/root/$TAR_FILE"
+    fi
+
+    # Step 5: Update helm deployment (if not skipped)
+    if [ "$SKIP_HELM" = true ]; then
+        echo "⏭️  Skipping helm deployment (--skip-helm flag provided)..."
+    else
+        echo "🔄 Updating helm deployment..."
+        kubectl exec "$POD_NAME" -- bash -c "
+cd /root
+CHART_FILE=\$(ls nemo-microservices-helm-chart-*.tgz | head -1)
+if [ -z \"\$CHART_FILE\" ]; then
+    echo 'Error: No helm chart file found in /root'
+    ls -la /root/*.tgz || echo 'No .tgz files found'
+    exit 1
+fi
+echo \"Using chart file: \$CHART_FILE\"
+helm upgrade nemo \"\$CHART_FILE\" \
+  --set deployment-management.image.repository=docker.io/my-registry/deployment-management \
+  --set deployment-management.image.tag=local \
+  --timeout 10m
+"
+    fi
+
+    # Step 6: Verify deployment (without long-running commands)
+    echo "✅ Deployment complete! Verifying..."
+
+    # Check deployment status
+    echo "📊 Deployment status:"
+    kubectl exec "$POD_NAME" -- kubectl get deployment nemo-deployment-management
+
+    # Delete the pod to force recreation with latest image
+    echo "🔄 Deleting deployment management pod to force recreation with latest image..."
+    kubectl exec "$POD_NAME" -- kubectl delete pods -l app.kubernetes.io/name=deployment-management --force --grace-period=0
+
+    # Wait a moment for pod recreation
+    echo "⏳ Waiting for pod recreation..."
+    sleep 5
+
+    # Check pod status
+    echo "📊 Pod status:"
+    kubectl exec "$POD_NAME" -- kubectl get pods -l app.kubernetes.io/name=deployment-management
+
+    # Check deployment description
+    echo "🔍 Deployment description:"
+    kubectl exec "$POD_NAME" -- kubectl describe deployment nemo-deployment-management | grep -A 5 -B 5 "Image:"
+
+    echo "✅ Development loop complete!"
+    ;;
+
+"chart")
+    # Check arguments for chart build
+    if [ $# -ne 3 ]; then
+        echo "Usage: $0 chart <pod-name> <chart-version> <container-version>"
+        echo "Example: $0 chart gpu-container 25.07 25.07"
+        exit 1
+    fi
+
+    POD_NAME="$1"
+    CHART_VERSION="$2"
+    CONTAINER_VERSION="$3"
+    CHART_FILE="nemo-microservices-helm-chart-${CHART_VERSION}.tgz"
+
+    echo "📦 Building chart..."
+    echo "Pod: $POD_NAME"
+    echo "Chart version: $CHART_VERSION"
+    echo "Container version: $CONTAINER_VERSION"
+
+    # Run the build script with the provided versions
+    script/build-manual-nmhc.sh -i "$CHART_VERSION" "$CONTAINER_VERSION"
+
+    # Check if chart file was created
+    if [ ! -f "$CHART_FILE" ]; then
+        echo "❌ Error: Chart file '$CHART_FILE' was not created"
+        exit 1
+    fi
+
+    echo "📤 Copying chart file to pod..."
+    kubectl cp "$CHART_FILE" "$POD_NAME:/root/"
+
+    # Update helm deployment
+    echo "🔄 Installing/upgrading helm deployment..."
+    kubectl exec "$POD_NAME" -- bash -c "
+cd /root
+CHART_FILE=\"$CHART_FILE\"
+if [ ! -f \"\$CHART_FILE\" ]; then
+    echo \"Error: Chart file '\$CHART_FILE' not found in /root\"
+    ls -la /root/*.tgz || echo 'No .tgz files found'
+    exit 1
+fi
+echo \"Using chart file: \$CHART_FILE\"
+helm upgrade --install nemo \"\$CHART_FILE\" \
+  --timeout 10m
+"
+
+    echo "✅ Chart build and deployment complete!"
+    echo "Chart file '$CHART_FILE' deployed to $POD_NAME"
+    ;;
+
+*)
+    echo "Error: Unknown build type '$BUILD_TYPE'"
+    echo "Usage: $0 <build-type> [additional-args]"
+    echo "Build types:"
+    echo "  service <pod-name> <build-target>  - Build and deploy service"
+    echo "  chart <pod-name> <chart-version> <container-version>  - Build the EA chart and copy to pod"
+    exit 1
+    ;;
+esac

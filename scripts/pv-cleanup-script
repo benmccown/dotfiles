@@ -1,0 +1,99 @@
+#!/bin/bash
+
+# Default values
+REGION=""
+LOG_FILE=""
+SEARCH_PREFIX=""
+DRY_RUN=true
+CONFIRM=true
+NAMESPACE=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -r|--region)
+      REGION="$2"
+      shift
+      shift
+      ;;
+    -l|--log-file)
+      LOG_FILE="$2"
+      shift
+      shift
+      ;;
+    -p|--prefix)
+      SEARCH_PREFIX="$2"
+      shift
+      shift
+      ;;
+    --no-dry-run)
+      DRY_RUN=false
+      shift
+      ;;
+    --no-confirm)
+      CONFIRM=false
+      shift
+      ;;
+    -n|--namespace)
+      NAMESPACE="$2"
+      shift
+      shift
+      ;;
+    -h|--help)
+      echo "Usage: $0 [OPTIONS]"
+      echo "Options:"
+      echo "  -r, --region REGION     AWS region (required)"
+      echo "  -l, --log-file FILE    Log file path (required)"
+      echo "  -p, --prefix PREFIX    Prefix for PV names (required)"
+      echo "  --no-dry-run           Disable dry-run mode (default: enabled)"
+      echo "  --no-confirm           Disable confirmation (default: enabled)"
+      echo "  -n, --namespace NS     Kubernetes namespace (required)"
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1"
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$SEARCH_PREFIX" ] || [ -z "$REGION" ] || [ -z "$LOG_FILE" ] || [ -z "$NAMESPACE" ]; then
+  echo "Search prefix, region, log file, and namespace options are required. Use -h for help."
+  exit 1
+fi
+
+DATE=$(date)
+if [ "$DRY_RUN" = true ]; then
+  echo "Dry-run mode is enabled. No resources will be deleted."
+else
+  echo "Dry-run mode is disabled."
+fi
+
+echo "--- $DATE" | tee -a "$LOG_FILE"
+echo "Showing all \"Available\" persistent volumes in namespace ($NAMESPACE) with prefix ($SEARCH_PREFIX)"
+kubectl get pv -n "$NAMESPACE" | grep "$SEARCH_PREFIX" | grep Available | tee -a "$LOG_FILE"
+
+
+for pv in $(kubectl get pv -n "$NAMESPACE" | grep "$SEARCH_PREFIX" | grep Available | awk '{print $1}'); do
+  echo "---"
+  echo "Deleting pv: $pv" | tee -a "$LOG_FILE"
+  VOL=$(kubectl get pv "$pv" -n "$NAMESPACE" -o json | jq -r .spec.csi.volumeHandle)
+  echo "AWS volume: $VOL" | tee -a "$LOG_FILE"
+
+  if [ "$DRY_RUN" = false ]; then
+    if [ "$CONFIRM" = true ]; then
+      read -r -p "Delete this resource? (y/n): " response
+      if [[ "$response" =~ ^[Yy] ]]; then
+        kubectl delete pv -n "$NAMESPACE" "$pv"
+        aws ec2 delete-volume --volume-id "$VOL" --region "$REGION"
+      else
+        echo "Resource not deleted." | tee -a "$LOG_FILE"
+      fi
+    else
+      kubectl delete pv -n "$NAMESPACE" "$pv"
+      aws ec2 delete-volume --volume-id "$VOL" --region "$REGION"
+    fi
+  else
+    echo "Resource not deleted (dry-run mode)." | tee -a "$LOG_FILE"
+  fi
+done
+

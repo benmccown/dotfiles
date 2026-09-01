@@ -1,0 +1,203 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Interactively remove git worktrees.
+
+Lists all worktrees (excluding the main repository), then asks which
+ones to KEEP. Everything else is removed along with its local branch
+and worktree directory.
+
+Options:
+  -h, --help    Show this help message and exit
+  -d, --dry-run Show what would be removed without actually doing it
+  -a, --all     Remove all worktrees (skip the keep prompt)
+
+Removal cleans up:
+  - The git worktree registration
+  - The worktree directory on disk (including empty parent dirs)
+  - The associated local branch
+
+Examples:
+  $(basename "$0")          # Interactive worktree cleanup
+  $(basename "$0") -d       # Dry run — preview without removing
+  $(basename "$0") -a       # Remove all worktrees
+EOF
+}
+
+parse_input() {
+    local input="$1"
+    local max="$2"
+    local -n _indices=$3
+
+    IFS=',' read -ra tokens <<< "$input"
+    for token in "${tokens[@]}"; do
+        token=$(echo "$token" | tr -d '[:space:]')
+
+        if [[ "$token" =~ ^[0-9]+-[0-9]+$ ]]; then
+            local range_start="${token%-*}"
+            local range_end="${token#*-}"
+            for (( n=range_start; n<=range_end; n++ )); do
+                if (( n >= 1 && n <= max )); then
+                    _indices+=($((n - 1)))
+                else
+                    echo "Warning: $n is out of range, ignoring." >&2
+                fi
+            done
+        elif [[ "$token" =~ ^[0-9]+$ ]]; then
+            if (( token >= 1 && token <= max )); then
+                _indices+=($((token - 1)))
+            else
+                echo "Warning: $token is out of range, ignoring." >&2
+            fi
+        else
+            echo "Warning: '$token' is not a valid number, ignoring." >&2
+        fi
+    done
+}
+
+DRY_RUN=0
+DELETE_ALL=0
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help) usage; exit 0 ;;
+        -d|--dry-run) DRY_RUN=1; shift ;;
+        -a|--all) DELETE_ALL=1; shift ;;
+        *) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
+    esac
+done
+
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+    echo "Error: not inside a git repository." >&2
+    exit 1
+fi
+
+repo_root=$(git rev-parse --show-toplevel)
+worktree_base="${repo_root}.worktrees"
+
+wt_paths=()
+wt_branches=()
+
+while IFS= read -r line; do
+    if [[ "$line" =~ ^worktree\ (.+) ]]; then
+        current_path="${BASH_REMATCH[1]}"
+    elif [[ "$line" =~ ^branch\ refs/heads/(.+) ]]; then
+        current_branch="${BASH_REMATCH[1]}"
+        if [[ "$current_path" != "$repo_root" ]]; then
+            wt_paths+=("$current_path")
+            wt_branches+=("$current_branch")
+        fi
+    elif [[ -z "$line" ]]; then
+        current_path=""
+        current_branch=""
+    fi
+done < <(git worktree list --porcelain; echo "")
+
+if [[ ${#wt_paths[@]} -eq 0 ]]; then
+    echo "No worktrees to clean up (main repository excluded)."
+    exit 0
+fi
+
+echo "Active worktrees:"
+echo ""
+for i in "${!wt_paths[@]}"; do
+    printf "  %3d) %-50s [%s]\n" $((i + 1)) "${wt_paths[$i]#"$worktree_base/"}" "${wt_branches[$i]}"
+done
+echo ""
+
+keep_indices=()
+
+if [[ $DELETE_ALL -eq 0 ]]; then
+    read -rp "Worktrees to KEEP (comma-separated numbers, or Enter for none): " input </dev/tty
+
+    if [[ -n "$input" ]]; then
+        parse_input "$input" "${#wt_paths[@]}" keep_indices
+    fi
+fi
+
+to_remove_idx=()
+to_keep_idx=()
+for i in "${!wt_paths[@]}"; do
+    is_kept=0
+    for k in "${keep_indices[@]+"${keep_indices[@]}"}"; do
+        if [[ "$i" -eq "$k" ]]; then
+            is_kept=1
+            break
+        fi
+    done
+    if [[ $is_kept -eq 1 ]]; then
+        to_keep_idx+=("$i")
+    else
+        to_remove_idx+=("$i")
+    fi
+done
+
+echo ""
+
+if [[ ${#to_remove_idx[@]} -eq 0 ]]; then
+    echo "No worktrees selected for removal."
+    exit 0
+fi
+
+if [[ ${#to_keep_idx[@]} -gt 0 ]]; then
+    echo "Keeping:"
+    for i in "${to_keep_idx[@]}"; do
+        echo "  + ${wt_branches[$i]}"
+    done
+    echo ""
+fi
+
+echo "Removing (worktree + local branch):"
+for i in "${to_remove_idx[@]}"; do
+    echo "  - ${wt_branches[$i]}  (${wt_paths[$i]})"
+done
+echo ""
+
+read -rp "Proceed with removal of ${#to_remove_idx[@]} worktree(s)? [y/N] " confirm </dev/tty
+case "$confirm" in
+    [yY]|[yY][eE][sS]) ;;
+    *) echo "Aborted."; exit 0 ;;
+esac
+
+echo ""
+for i in "${to_remove_idx[@]}"; do
+    wt_path="${wt_paths[$i]}"
+    branch="${wt_branches[$i]}"
+
+    if [[ $DRY_RUN -eq 1 ]]; then
+        echo "[dry-run] Would remove worktree: $wt_path"
+        echo "[dry-run] Would delete branch:   $branch"
+        continue
+    fi
+
+    if git worktree remove "$wt_path" --force 2>/dev/null; then
+        echo "Removed worktree: ${wt_path#"$worktree_base/"}"
+    else
+        echo "Failed to remove worktree '$wt_path'." >&2
+        continue
+    fi
+
+    parent_dir="$(dirname "$wt_path")"
+    while [[ "$parent_dir" != "$worktree_base" && "$parent_dir" != "/" ]]; do
+        if [[ -d "$parent_dir" ]] && [[ -z "$(ls -A "$parent_dir" 2>/dev/null)" ]]; then
+            rmdir "$parent_dir" 2>/dev/null && echo "Cleaned up empty dir: ${parent_dir#"$worktree_base/"}"
+            parent_dir="$(dirname "$parent_dir")"
+        else
+            break
+        fi
+    done
+
+    if git branch -D "$branch" 2>/dev/null; then
+        echo "Deleted branch: $branch"
+    else
+        echo "Warning: could not delete branch '$branch'." >&2
+    fi
+
+    echo ""
+done
+
+echo "Done."

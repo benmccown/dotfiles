@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Sample tag value
+new_tag="gretel-1.2.3"
+
+echo "Testing original command (with <<<):"
+release_name_before=$(cut -d- -f2 <<<"$new_tag")
+echo "Original release_name: $release_name_before"
+
+echo ""
+echo "Testing modified command (with echo | cut):"
+release_name_after=$(echo "$new_tag" | cut -d- -f2)
+echo "Modified release_name: $release_name_after"
+
+# Compare results
+if [ "$release_name_before" == "$release_name_after" ]; then
+  echo ""
+  echo "Results match!"
+else
+  echo ""
+  echo "Results differ!"
+fi
+

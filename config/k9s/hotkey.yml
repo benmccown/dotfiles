@@ -1,0 +1,33 @@
+hotKey:
+  shift-0:
+    shortCut:    Shift-0
+    description: Viewing nodes
+    command:     nodes
+  shift-1:
+    shortCut:    Shift-1
+    description: Viewing namespaces
+    command:     ns
+  shift-2:
+    shortCut:    Shift-2
+    description: Viewing pods
+    command:     pods
+  shift-3:
+    shortCut:    Shift-3
+    description: Viewing services
+    command:     services
+  shift-4:
+    shortCut:    Shift-4
+    description: Viewing deployments
+    command:     deployments
+  shift-5:
+    shortCut:    Shift-5
+    description: Viewing statefulsets
+    command:     statefulsets
+  shift-6:
+    shortCut:    Shift-6
+    description: Viewing persistent volumes
+    command:     pv
+  shift-7:
+    shortCut:    Shift-7
+    description: Viewing persistent volumes claims
+    command:     pvc

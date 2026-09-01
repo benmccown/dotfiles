@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+context_name=$(kubectx -c)
+if [[ $context_name == *"hadron-prod-pdx"* ]] ||
+   [[ $context_name == *"cloud-api-prod-pdx"* ]] ||
+   [[ $context_name == *"cloud-gcc-prod-pdx"* ]]; then
+  echo "setting prod vnet"
+  warp-cli --accept-tos vnet "8acf46fe-6758-4286-bc2e-8203d6ed510e"
+else
+  echo "setting dev vnet"
+  warp-cli --accept-tos vnet "da454f54-1a52-4aa5-9edf-28cca41a873d"
+fi
