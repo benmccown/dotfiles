@@ -1,0 +1,53 @@
+{
+  "mcpServers": {
+    "linear": {
+      "url": "https://mcp.linear.app/mcp",
+      "auth": "oauth",
+      "protocolVersion": "auto"
+    },
+    "maas-outlook": {
+      "url": "https://maas.prd.astra.nvidia.com/maas/outlook/mcp",
+      "auth": "oauth",
+      "oauth": {
+        "clientId": "eci-prd-pub-9ab40d21-b129-4075-8e82-842df4cb5045"
+      },
+      "protocolVersion": "auto"
+    },
+    "maas-nvinfo": {
+      "url": "https://maas.prd.astra.nvidia.com/maas/nvinfo/mcp",
+      "auth": "oauth",
+      "oauth": { "clientId": "eci-prd-pub-9ab40d21-b129-4075-8e82-842df4cb5045" },
+      "protocolVersion": "auto"
+    },
+    "maas-gitlab": {
+      "url": "https://maas.prd.astra.nvidia.com/maas/gitlab/mcp",
+      "auth": "oauth",
+      "oauth": { "clientId": "eci-prd-pub-9ab40d21-b129-4075-8e82-842df4cb5045" },
+      "protocolVersion": "auto"
+    },
+    "maas-nvbugs": {
+      "url": "https://maas.prd.astra.nvidia.com/maas/nvbugs/mcp",
+      "auth": "oauth",
+      "oauth": { "clientId": "eci-prd-pub-9ab40d21-b129-4075-8e82-842df4cb5045" },
+      "protocolVersion": "auto"
+    },
+    "maas-slack": {
+      "url": "https://maas.prd.astra.nvidia.com/maas/slack/mcp",
+      "auth": "oauth",
+      "oauth": { "clientId": "eci-prd-pub-9ab40d21-b129-4075-8e82-842df4cb5045" },
+      "protocolVersion": "auto"
+    },
+    "maas-teams": {
+      "url": "https://maas.prd.astra.nvidia.com/maas/teams/mcp",
+      "auth": "oauth",
+      "oauth": { "clientId": "eci-prd-pub-9ab40d21-b129-4075-8e82-842df4cb5045" },
+      "protocolVersion": "auto"
+    },
+    "maas-gdrive": {
+      "url": "https://maas.prd.astra.nvidia.com/maas/gdrive_v2/mcp",
+      "auth": "oauth",
+      "oauth": { "clientId": "eci-prd-pub-9ab40d21-b129-4075-8e82-842df4cb5045" },
+      "protocolVersion": "auto"
+    }
+  }
+}
