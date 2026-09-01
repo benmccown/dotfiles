@@ -1,1 +1,5 @@
 node_modules/
+
+# Cloned checkouts (large, not committed) — e.g. the nemo-platform run-copy
+# that platform.sh manages. See nemo-platform/README.md.
+.repos/
