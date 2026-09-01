@@ -17,6 +17,9 @@ EGRESS_LOG="$LOG_DIR/egress.log"
 # ---- privileged setup (root) ----
 if [ "$(id -u)" -eq 0 ]; then
   mkdir -p "$LOG_DIR"; chown "$DEV_USER" "$LOG_DIR" 2>/dev/null || true
+  # Ensure ~/.pi exists and is dev-owned (only ~/.pi/agent is a mount; the parent
+  # is created root-owned otherwise, blocking e.g. the Slack bridge config write).
+  mkdir -p "$DEV_HOME/.pi"; chown "$DEV_USER" "$DEV_HOME/.pi" 2>/dev/null || true
   UPSTREAM="$(grep -m1 '^nameserver' /etc/resolv.conf | awk '{print $2}' || true)"
   if command -v dnsmasq >/dev/null 2>&1 && [ -n "${UPSTREAM:-}" ] && [ "$UPSTREAM" != "127.0.0.1" ]; then
     dnsmasq --log-queries --log-facility="$EGRESS_LOG" \

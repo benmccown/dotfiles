@@ -53,6 +53,17 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
  && rm -rf /var/lib/apt/lists/* \
  && npm i -g @earendil-works/pi-coding-agent
 
+# Slack bridge extension, installed OFF the auto-discovery path (/opt/slack-bridge).
+# It stays inert — normal `pi`/`pi-dev` sessions never load it. Only the opt-in
+# `pi-slack-dev` launcher loads it for ONE session via `pi -e`. This keeps the
+# per-cmux-workspace devcontainer sessions clean; exactly one may run the bridge.
+RUN mkdir -p /opt/slack-bridge
+WORKDIR /opt/slack-bridge
+RUN npm init -y >/dev/null 2>&1 \
+ && npm i pi-messenger-bridge@0.4.0 \
+ && chmod -R a+rX /opt/slack-bridge
+WORKDIR /Users/bmccown/Code
+
 # gh (GitHub CLI). glab omitted — optional; install by hand if needed.
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /usr/share/keyrings/githubcli.gpg \
  && echo "deb [signed-by=/usr/share/keyrings/githubcli.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list \
