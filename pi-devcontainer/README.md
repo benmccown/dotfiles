@@ -121,6 +121,12 @@ sessions are just `spawn.sh <branch> --launch pi-dev`.
 Full how-to + gotchas: the **`pi-devcontainer` skill**
 (`skills/pi-devcontainer/SKILL.md`, symlinked into the brain skills dir).
 
+> **New-machine one-time step:** the skill is discovered via a symlink at
+> `~/Code/pi-brain/brain/memory/skills/pi-devcontainer` → this folder, which is
+> gitignored in pi-brain (not tracked anywhere). On a fresh workstation, create
+> it once: `ln -sfn ~/Code/dotfiles/pi-devcontainer/skills/pi-devcontainer
+> ~/Code/pi-brain/brain/memory/skills/pi-devcontainer` (then `skill_register`).
+
 ## Policy notes
 
 - Writes to sources of truth (repos, Jira, NVBugs) need human review — you land
