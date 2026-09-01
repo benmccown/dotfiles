@@ -31,6 +31,7 @@ mounts=(
   "$HOME/.config/git:/Users/bmccown/.config/git:ro"
   "$HOME/.config/k9s:/Users/bmccown/.config/k9s"
   "$HOME/.tsh:/Users/bmccown/.tsh"
+  "$HOME/.ssh:/Users/bmccown/.ssh:ro"
   "$HOME/teleport-kubeconfig.yaml:/Users/bmccown/teleport-kubeconfig.yaml:ro"
 )
 

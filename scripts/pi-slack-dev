@@ -58,4 +58,4 @@ for v in $(env | grep -oE '^PI_[A-Z0-9_]+' || true); do env_args+=(-e "$v"); don
 tty_flag=(-i); [ -t 0 ] && [ -t 1 ] && tty_flag=(-it)
 
 exec docker exec "${tty_flag[@]}" -u dev -w "$PWD" "${env_args[@]}" \
-  -e PI_DEV_INSIDE=1 "$NAME" zsh -lc 'exec pi-slack-dev "$@"' _ "$@"
+  -e PI_DEV_INSIDE=1 "$NAME" zsh -lc 'exec "$HOME/.scripts/pi-slack-dev" "$@"' _ "$@"

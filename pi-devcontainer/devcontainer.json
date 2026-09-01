@@ -15,6 +15,7 @@
     "source=${localEnv:HOME}/.config/git,target=/Users/bmccown/.config/git,type=bind,readonly",
     "source=${localEnv:HOME}/.config/k9s,target=/Users/bmccown/.config/k9s,type=bind",
     "source=${localEnv:HOME}/.tsh,target=/Users/bmccown/.tsh,type=bind",
+    "source=${localEnv:HOME}/.ssh,target=/Users/bmccown/.ssh,type=bind,readonly",
     "source=${localEnv:HOME}/teleport-kubeconfig.yaml,target=/Users/bmccown/teleport-kubeconfig.yaml,type=bind,readonly"
   ],
 
