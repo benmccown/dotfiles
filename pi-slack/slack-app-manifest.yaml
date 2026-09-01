@@ -1,19 +1,13 @@
 # Slack app manifest for the pi-agent bridge (Socket Mode).
 # Create the app at https://api.slack.com/apps -> "From a manifest" -> paste this.
 #
-# SCOPE POSTURE: "generous, don't re-raise later." DMs are the goal TODAY, but this
-# grants the full read/write conversation surface (channels + groups + im + mpim,
-# mentions, reactions, slash commands, files) so growing into channels/mentions
-# later needs NO new permission request + admin re-approval.
-#
-# This mirrors the `pi-relay` / omnirelay app's scope set, with ONE deliberate
-# difference: files:write is commented out (see note below). Uncomment it if you
-# want the bot to upload/edit/delete files.
+# Scope posture: the read/write conversation surface the bridge uses across direct
+# messages and channels the app is explicitly added to.
 #
 # After creating:
 #   1. Basic Information -> App-Level Tokens -> Generate a token with `connections:write`
 #      => this is your xapp-... APP token (Socket Mode).
-#   2. Install to Workspace (needs Slack workspace admin approval at NVIDIA)
+#   2. Install to Workspace (workspace admin approval required)
 #      => OAuth & Permissions gives you the xoxb-... BOT token.
 display_information:
   name: pi-agent (bmccown)
