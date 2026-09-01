@@ -46,6 +46,12 @@ NVIDIA's MaaS MCP servers all follow one shape:
   https://ipp-safety-tools.gitlab-master-pages.nvidia.com/giza-llm-tools/giza_ai/docs/category/maas-mcp-servers-user-guide
 - Some servers have versioned paths (e.g. `gdrive_v2` supersedes `gdrive`,
   `confluence_v2` supersedes `confluence`) — check the server's doc page.
+- **Not every server takes a `clientId`.** Some (e.g. `nvinfo`, `gitlab`) use
+  dynamic OAuth registration via NVIDIA SSO — their config is `url` only, with
+  NO `oauth`/`clientId` block. Passing a clientId to these fails with
+  "Invalid client, unknown or invalid client_id" (and can hard-lock the auth
+  flow). Check the doc page: if its Manual Setup block shows only a `url`, omit
+  the `oauth` block entirely.
 - A bare `GET` to a live endpoint returns HTTP `405` (wrong method) — handy
   liveness check: `curl -s -o /dev/null -w '%{http_code}' <url>`.
 
@@ -55,11 +61,11 @@ NVIDIA's MaaS MCP servers all follow one shape:
 |---|---|---|
 | `linear` | `mcp.linear.app/mcp` | not MaaS; Linear's own hosted MCP |
 | `maas-outlook` | `/maas/outlook/mcp` | email/calendar |
-| `maas-gitlab` | `/maas/gitlab/mcp` | |
+| `maas-gitlab` | `/maas/gitlab/mcp` | **no clientId** (SSO) |
 | `maas-nvbugs` | `/maas/nvbugs/mcp` | bug tracker |
 | `maas-slack` | `/maas/slack/mcp` | |
 | `maas-teams` | `/maas/teams/mcp` | |
-| `maas-nvinfo` | `/maas/nvinfo/mcp` | employee/org/rooms lookup |
+| `maas-nvinfo` | `/maas/nvinfo/mcp` | employee/org/rooms lookup — **no clientId** (SSO) |
 | `maas-gdrive` | `/maas/gdrive_v2/mcp` | v2 (v1 legacy) |
 
 To add more: pick from the catalog, append to `servers.json` following the
