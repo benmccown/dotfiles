@@ -36,4 +36,5 @@ Responds only to the Slack member id in `PI_SLACK_OWNER_ID`.
 
 ## Slack app
 
-App manifest for reference: [`slack-app-manifest.yaml`](./slack-app-manifest.yaml).
+Create the app at <https://api.slack.com/apps> via "From a manifest" (Socket Mode,
+`connections:write` app-level token, install for the bot token).
