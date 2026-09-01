@@ -1,0 +1,50 @@
+# ~/.zshrc.mac — macOS-only overlay, sourced at the END of ~/.zshrc (Mac only).
+# Everything here assumes Homebrew, oh-my-zsh, and mac-installed tools. The pi
+# devcontainer does NOT mount this file.
+
+# --- Homebrew ---
+export HOMEBREW_PREFIX="$(brew --prefix)"
+export PATH="/opt/homebrew/opt/mysql-client/bin:/opt/homebrew/bin:$PATH"
+
+# --- locale (mac has en_US.UTF-8) ---
+export LC_ALL=en_US.UTF-8
+
+# --- oh-my-zsh ---
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+plugins=(git fast-syntax-highlighting zsh-fzf-history-search fzf-tab kubectl)
+fpath=($(brew --prefix)/share/zsh/site-functions "$HOME/.scripts/.fpath" /opt/homebrew/share/zsh/site-functions $fpath)
+source $ZSH/oh-my-zsh.sh
+
+# --- kube switcher (mac tool) ---
+source <(switcher init zsh)
+source <(compdef _switcher switch)
+
+# --- completions ---
+command -v k9s >/dev/null && source <(k9s completion zsh)
+autoload bashcompinit && bashcompinit
+[ -f "$(brew --prefix)/etc/bash_completion.d/az" ] && source "$(brew --prefix)/etc/bash_completion.d/az"
+
+# --- direnv ---
+eval "$(direnv hook zsh)"
+
+# --- nvm ---
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+# --- uv completions ---
+eval "$(uv generate-shell-completion zsh)"
+eval "$(uvx --generate-shell-completion zsh)"
+
+# --- gnu-tar (prefer over bsd tar) ---
+export PATH="$HOMEBREW_PREFIX/opt/gnu-tar/libexec/gnubin:$PATH"
+
+# --- krew (kubectl plugins) ---
+export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+
+# --- opencode ---
+export PATH="$HOME/.opencode/bin:$PATH"
+
+# --- completion init (after all fpath additions) ---
+fpath+=~/.zfunc; autoload -Uz compinit; compinit

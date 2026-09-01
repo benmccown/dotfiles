@@ -8,7 +8,13 @@
   "mounts": [
     "source=${localEnv:HOME}/.pi/agent,target=/Users/bmccown/.pi/agent,type=bind",
     "source=${localEnv:HOME}/.config/mcp,target=/Users/bmccown/.config/mcp,type=bind",
-    "source=${localEnv:HOME}/.gitconfig,target=/home/dev/.gitconfig,type=bind,readonly"
+    "source=${localEnv:HOME}/.config/secrets.env,target=/Users/bmccown/.config/secrets.env,type=bind,readonly",
+    "source=${localEnv:HOME}/.zshrc,target=/Users/bmccown/.zshrc,type=bind,readonly",
+    "source=${localEnv:HOME}/.scripts,target=/Users/bmccown/.scripts,type=bind",
+    "source=${localEnv:HOME}/.config/git,target=/Users/bmccown/.config/git,type=bind,readonly",
+    "source=${localEnv:HOME}/.config/k9s,target=/Users/bmccown/.config/k9s,type=bind",
+    "source=${localEnv:HOME}/.tsh,target=/Users/bmccown/.tsh,type=bind",
+    "source=${localEnv:HOME}/teleport-kubeconfig.yaml,target=/Users/bmccown/teleport-kubeconfig.yaml,type=bind,readonly"
   ],
 
   "remoteUser": "dev",
@@ -18,11 +24,14 @@
     "NVIDIA_INFERENCE_API_KEY": "${localEnv:NVIDIA_INFERENCE_API_KEY}",
     "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}",
     "GITLAB_HOST": "gitlab-master.nvidia.com",
+    "KUBECONFIG": "/Users/bmccown/teleport-kubeconfig.yaml",
     "PI_EGRESS_LOG_DIR": "/Users/bmccown/Code/.pi-egress",
     "HOME": "/Users/bmccown"
   },
 
   "capAdd": ["NET_ADMIN"],
+
+  "runArgs": ["--add-host=host.docker.internal:host-gateway"],
 
   "postAttachCommand": "pi --version || true"
 }

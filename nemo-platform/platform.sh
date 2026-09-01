@@ -20,6 +20,7 @@
 #   scripts/platform.sh logs      # tail the platform log
 #   scripts/platform.sh url       # print NMP_BASE_URL
 #   scripts/platform.sh stop      # stop the tmux session (leaves data intact)
+#   scripts/platform.sh redeploy  # stop, git pull latest main, start again (data intact)
 #
 # Config (override via env):
 #   PI_BRAIN_NMP_PORT       (default 49500)  bespoke port in the RFC 6335 dynamic range
@@ -199,6 +200,16 @@ cmd_stop() {
   tmux kill-session -t "$TMUX_SESSION" 2>/dev/null && log "stopped $TMUX_SESSION (data preserved at $NMP_DATA_DIR)" || log "not running"
 }
 
+# Stop -> pull latest main -> start again. Data (NMP_DATA_DIR) is preserved.
+cmd_redeploy() {
+  [ -d "$NMP_DIR/.git" ] || die "no checkout; run: $0 up"
+  cmd_stop
+  log "pulling latest main in $NMP_DIR"
+  ( cd "$NMP_DIR" && git checkout main && git pull --ff-only )
+  cmd_start
+  log "redeploy done — running latest main at $BASE_URL"
+}
+
 cmd_up() {
   cmd_clone
   cmd_bootstrap
@@ -222,5 +233,6 @@ case "${1:-up}" in
   logs) cmd_logs "$@" ;;
   url) cmd_url ;;
   stop) cmd_stop ;;
+  redeploy) cmd_redeploy ;;
   *) die "unknown command: $1 (see header for usage)" ;;
 esac

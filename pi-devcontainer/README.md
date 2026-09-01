@@ -24,12 +24,41 @@ symlinked extensions, worktrees, and configs resolve unchanged:
 |---|---|---|
 | `~/Code` | `/Users/bmccown/Code` | all projects + `*.worktrees` (pi-brain, nemo-platform, nmp) |
 | `~/.pi/agent` | `/Users/bmccown/.pi/agent` | pi config, installed packages/extensions, auth |
-| `~/.config/mcp` | `/Users/bmccown/.config/mcp` | your 8 MCP servers |
-| `~/.gitconfig` | `…/.gitconfig` (ro) | identity, read-only |
+| `~/.config/mcp` | `/Users/bmccown/.config/mcp` | your MCP servers |
+| `~/.config/secrets.env` | `…` (ro) | API keys/tokens (sourced by zshrc) |
+| `~/.zshrc` | `…` (ro) | portable shell config (mac overlay excluded) |
+| `~/.scripts` | `…` | your bin (git-wtadd, devbuild, md2pdf, …) |
+| `~/.config/git` `~/.config/k9s` | `…` | git hooks/ignore, k9s config |
+| `~/.tsh` + `~/teleport-kubeconfig.yaml` | `…` | Teleport session + kubeconfig → `kubectl` to `bmccown-dev` |
 
 The `dev` user's `$HOME` is `/Users/bmccown` so `~/.pi/agent/extensions/*`
 symlinks into `~/Code/pi-brain/extensions/*` resolve. You open the container
 **once** and every project/worktree is inside it — not per-project.
+
+## Shell (portable base + mac overlay)
+
+`~/.zshrc` is the **portable base** (aliases, `wtadd`/`wtrm`, env, secrets
+source, `~/.scripts` on PATH) used by BOTH host and container. macOS-only bits
+(oh-my-zsh, brew, switcher, nvm, completions) live in `~/.zshrc.mac`, which the
+base sources only if present — so the container gets a clean shell with no
+brew/oh-my-zsh errors. `wtadd` uses `git config --unset core.bare` (portable),
+not `sed -i ''` (macOS-only).
+
+## kubectl / Teleport (bmccown-dev)
+
+The kubeconfig's exec-plugin shells out to `tsh`, so the image ships `tsh`
+(pinned to the host version) at `/usr/local/bin/tsh` and mounts your live
+`~/.tsh` session — `kubectl get pods -n bmccown-dev` works in-container (no
+YubiKey inside; re-auth with `tsh login` on the **host** when the ~11h session
+expires — the mount picks it up live).
+
+## Local nemo-platform
+
+Your host's `localhost:49500` is **not** the container's localhost. The
+container gets `--add-host=host.docker.internal:host-gateway`, so the running
+platform is reachable at **`host.docker.internal:49500`** inside the container.
+(Your default provider is `nvidia-direct`/`inference-api.nvidia.com`, which needs
+none of this; only the local `nemo` provider does.)
 
 ## Egress: allow-all, but RECORD
 
@@ -44,26 +73,31 @@ a future "default allowlist + ask-on-miss" posture — with:
 
 ## Contents
 
-- Ubuntu 24.04 (LTS) + Node 24 (LTS) + pi + git + **gh**.
-- Debugging tools: `curl`, `jq`, `yq`, `sqlite3`, `ripgrep`, `fd`, `bat`,
-  `python3`/`pipx`, `pandoc` (markdown), `tree`, `dnsutils`, `netcat`, etc.
+- Ubuntu 24.04 (LTS) + Node 24 (LTS) + **Go 1.27** + pi + git + **gh**.
+- Kube/infra: `kubectl`, `tsh` (Teleport), `helm`, `kubectx`/`kubens`.
+- Dev/debug: `curl`, `httpie`, `jq`, `yq`, `sqlite3`, `ripgrep`, `fd`, `bat`,
+  `python3`/`pipx`/`uv`, `pandoc`, `neovim`, `tree`, `dnsutils`, `netcat`, `eza`.
 - `GITHUB_TOKEN` injected → `gh` auto-authenticates.
-- Provider `nvidia-direct` → `inference-api.nvidia.com` (comes from your mounted
+- Provider `nvidia-direct` → `inference-api.nvidia.com` (from your mounted
   `~/.pi/agent`; a fallback is seeded only if none is mounted).
+
+Bump tool versions via the `ARG`s at the top of the Dockerfile (`GO_VERSION`,
+`TSH_VERSION` — keep matching the host —, `HELM_VERSION`). Add an apt tool to the
+first `RUN`; add a released-binary tool to the `TARGETARCH` `RUN` block.
 
 ## Usage
 
 ```sh
 export NVIDIA_INFERENCE_API_KEY=...          # host shell (GITHUB_TOKEN too)
 ~/Code/dotfiles/pi-devcontainer/install.sh   # build + run container "pi-agent"
-docker exec -it pi-agent bash -l             # then: cd ~/Code/<proj> && pi
-#   or: install.sh --exec
-#   VS Code: install.sh --vscode  → open ~/Code → Reopen in Container
+~/Code/dotfiles/pi-devcontainer/install.sh --exec   # open a zsh shell
+#   then: cd ~/Code/<proj> && pi
+#   VS Code: install.sh --vscode  → open ~/Code → Attach/Reopen in Container
 ```
 
 MCP servers are already mounted; run `/mcp-auth` in pi to (re)authorize them.
 `./verify.sh` runs a full smoke test (versions, tools, mounts, extensions, gh,
-egress) — all green.
+kube→bmccown-dev, host nemo-platform, egress) — all green.
 
 ## Policy notes
 

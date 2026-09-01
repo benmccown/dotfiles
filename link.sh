@@ -17,6 +17,7 @@ DRY=0; [ "${1:-}" = "--dry-run" ] && DRY=1
 # src (in repo)            -> dest (in $HOME)
 LINKS=(
   "home/.zshrc:$HOME/.zshrc"
+  "home/.zshrc.mac:$HOME/.zshrc.mac"
   "scripts:$HOME/.scripts"
   "config/git:$HOME/.config/git"
   "config/k9s:$HOME/.config/k9s"
