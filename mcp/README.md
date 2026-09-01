@@ -66,6 +66,7 @@ NVIDIA's MaaS MCP servers all follow one shape:
 | `maas-teams` | `/maas/teams/mcp` | |
 | `maas-nvinfo` | `/maas/nvinfo/mcp` | employee/org/rooms lookup — **no clientId** (SSO) |
 | `maas-gdrive` | `/maas/gdrive_v2/mcp` | v2 (v1 legacy) |
+| `maas-confluence` | `/maas/confluence_v2/mcp` | v2 (v1 legacy) |
 
 To add more: pick from the catalog, append to `servers.json` following the
 MaaS pattern, run `./sync-mcp.sh`, then `/mcp-auth`.

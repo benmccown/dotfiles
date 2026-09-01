@@ -49,6 +49,14 @@
         "clientId": "eci-prd-pub-9ab40d21-b129-4075-8e82-842df4cb5045"
       },
       "protocolVersion": "auto"
+    },
+    "maas-confluence": {
+      "url": "https://maas.prd.astra.nvidia.com/maas/confluence_v2/mcp",
+      "auth": "oauth",
+      "oauth": {
+        "clientId": "eci-prd-pub-9ab40d21-b129-4075-8e82-842df4cb5045"
+      },
+      "protocolVersion": "auto"
     }
   }
 }
