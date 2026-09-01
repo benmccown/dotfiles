@@ -18,11 +18,6 @@
       "auth": "oauth",
       "protocolVersion": "auto"
     },
-    "maas-gitlab": {
-      "url": "https://maas.prd.astra.nvidia.com/maas/gitlab/mcp",
-      "auth": "oauth",
-      "protocolVersion": "auto"
-    },
     "maas-nvbugs": {
       "url": "https://maas.prd.astra.nvidia.com/maas/nvbugs/mcp",
       "auth": "oauth",

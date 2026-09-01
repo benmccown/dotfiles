@@ -61,7 +61,6 @@ NVIDIA's MaaS MCP servers all follow one shape:
 |---|---|---|
 | `linear` | `mcp.linear.app/mcp` | not MaaS; Linear's own hosted MCP |
 | `maas-outlook` | `/maas/outlook/mcp` | email/calendar |
-| `maas-gitlab` | `/maas/gitlab/mcp` | **no clientId** (SSO) |
 | `maas-nvbugs` | `/maas/nvbugs/mcp` | bug tracker |
 | `maas-slack` | `/maas/slack/mcp` | |
 | `maas-teams` | `/maas/teams/mcp` | |
