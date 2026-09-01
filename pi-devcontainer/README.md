@@ -99,6 +99,28 @@ MCP servers are already mounted; run `/mcp-auth` in pi to (re)authorize them.
 `./verify.sh` runs a full smoke test (versions, tools, mounts, extensions, gh,
 kube→bmccown-dev, host nemo-platform, egress) — all green.
 
+## Running pi + multi-session (cmux/worktrees)
+
+Use the **`pi-dev`** wrapper (`~/.scripts/pi-dev`, on PATH) to run pi inside the
+container at your current dir:
+
+```sh
+pi-dev              # pi in cwd, in the container
+pi-dev --version    # args pass through
+pi-dev --shell      # zsh in the container at $PWD
+pi-dev -- <cmd> ... # arbitrary command in the container at $PWD
+```
+
+It auto-detects being already inside the container (no nested docker), uses a
+TTY only when attached to one (cmux + pipes both work), and forwards `PI_*` env.
+
+**Worktrees:** cmux stays on the host and launches sessions into the container.
+The pi-brain worktree-agent spawn takes `--launch`, so per-worktree container
+sessions are just `spawn.sh <branch> --launch pi-dev`.
+
+Full how-to + gotchas: the **`pi-devcontainer` skill**
+(`skills/pi-devcontainer/SKILL.md`, symlinked into the brain skills dir).
+
 ## Policy notes
 
 - Writes to sources of truth (repos, Jira, NVBugs) need human review — you land

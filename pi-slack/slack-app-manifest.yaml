@@ -1,0 +1,83 @@
+# Slack app manifest for the pi-agent bridge (Socket Mode).
+# Create the app at https://api.slack.com/apps -> "From a manifest" -> paste this.
+#
+# SCOPE POSTURE: "generous, don't re-raise later." DMs are the goal TODAY, but this
+# grants the full read/write conversation surface (channels + groups + im + mpim,
+# mentions, reactions, slash commands, files) so growing into channels/mentions
+# later needs NO new permission request + admin re-approval.
+#
+# This mirrors the `pi-relay` / omnirelay app's scope set, with ONE deliberate
+# difference: files:write is commented out (see note below). Uncomment it if you
+# want the bot to upload/edit/delete files.
+#
+# After creating:
+#   1. Basic Information -> App-Level Tokens -> Generate a token with `connections:write`
+#      => this is your xapp-... APP token (Socket Mode).
+#   2. Install to Workspace (needs Slack workspace admin approval at NVIDIA)
+#      => OAuth & Permissions gives you the xoxb-... BOT token.
+display_information:
+  name: pi-agent (bmccown)
+  description: Personal pi coding-agent bridge
+  long_description: >-
+    A bridge that lets the owner talk to their personal pi coding agent from
+    Slack. Primary use is direct messages; broader conversation scopes are
+    granted up front to avoid re-requesting permissions as usage grows.
+    Single authorized user (the owner); not multi-tenant.
+features:
+  bot_user:
+    display_name: pi-agent
+    always_online: false
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  # Uncomment to add a slash command (the `commands` scope below enables it):
+  # slash_commands:
+  #   - command: /pi
+  #     description: Talk to your pi agent
+  #     usage_hint: "<your prompt>"
+  #     should_escape: false
+oauth_config:
+  scopes:
+    bot:
+      # --- core: receive + reply (needed today for DMs) ---
+      - im:history          # read DMs sent to the bot
+      - im:read             # basic DM info (DM vs channel detection)
+      - im:write            # open/start a DM with a user
+      - chat:write          # post replies
+      - app_mentions:read   # see @pi-agent mentions in channels
+      # --- growth: channels / private channels / group DMs ---
+      - channels:history    # read public-channel messages the bot is in
+      - channels:read       # basic public-channel info
+      - groups:history      # read private-channel messages the bot is in
+      - groups:read         # basic private-channel info
+      - mpim:history         # read group-DM messages
+      - mpim:read           # basic group-DM info
+      # --- niceties: people, reactions, files (read), slash commands ---
+      - users:read          # resolve user id -> name
+      - users:read.email    # resolve email (user lookup)
+      - reactions:read      # see reactions + their content
+      - reactions:write     # add/edit reactions (e.g. ack a message)
+      - files:read          # see files shared in convos the bot is in
+      - commands            # register slash commands
+      # --- files:write DROPPED: upload/edit/DELETE files AS the bot is the biggest
+      #     blast radius for a code agent (exfil/spoofing) and not needed. Deliberately
+      #     not requested even in the generous set. Add back only with a real need.
+    #
+    # Intentionally still NOT requested (would need admin approval anyway, not needed):
+    #   search:read (admin-gated), admin.*, any user-token (xoxp-) scopes,
+    #   channels:manage / chat:write.customize / chat:write.public, bookmarks:*,
+    #   canvases:*, pins:*  -> add later only if a concrete need appears.
+settings:
+  event_subscriptions:
+    bot_events:
+      - message.im          # a DM to the bot  (the one you need today)
+      - app_mention         # @pi-agent in a channel (growth)
+      - message.channels    # public-channel messages (growth; noisy - bot only gets ones it's in)
+      - message.groups      # private-channel messages (growth)
+      - message.mpim        # group-DM messages (growth)
+  interactivity:
+    is_enabled: true        # required if you enable slash commands / reaction buttons
+  org_deploy_enabled: false
+  socket_mode_enabled: true # no public inbound URL; connects out over WebSocket
+  token_rotation_enabled: false

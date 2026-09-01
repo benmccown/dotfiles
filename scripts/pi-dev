@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# pi-dev — run `pi` (or any command) inside the pi-agent devcontainer, in your
+# current directory. The container mounts ~/Code at identical paths, so $PWD is
+# valid inside unchanged. Use anywhere you'd run `pi` but want the sandbox:
+#
+#   pi-dev                      # pi in the current dir, inside the container
+#   pi-dev --version            # pass args through to pi
+#   pi-dev --shell              # zsh in the container at $PWD (instead of pi)
+#   pi-dev -- <cmd> [args...]   # run an arbitrary command in the container at $PWD
+#
+# cmux/worktree flow: `spawn.sh <branch> --launch pi-dev` launches each worktree's
+# session in the container. Env like PI_BRAIN_VAULT_DIR is forwarded through.
+set -euo pipefail
+
+NAME="${PI_DEV_CONTAINER:-pi-agent}"
+
+# If we're ALREADY inside the container, just exec directly (no nested docker).
+if [ -f /.dockerenv ] || [ "${PI_DEV_INSIDE:-}" = "1" ]; then
+  case "${1:-}" in
+    --shell) shift; exec zsh -l ;;
+    --) shift; exec "$@" ;;
+    *) exec pi "$@" ;;
+  esac
+fi
+
+command -v docker >/dev/null || { echo "pi-dev: docker not found" >&2; exit 1; }
+if ! docker ps --format '{{.Names}}' | grep -qx "$NAME"; then
+  echo "pi-dev: container '$NAME' not running. Start it with:" >&2
+  echo "  ~/Code/dotfiles/pi-devcontainer/install.sh" >&2
+  exit 1
+fi
+
+# Forward pi-brain / PI_* env into the container (e.g. vault pinning from spawn.sh).
+env_args=()
+for v in $(env | grep -oE '^PI_[A-Z0-9_]+' || true); do env_args+=(-e "$v"); done
+
+# Decide what to run inside, at the current working directory.
+case "${1:-}" in
+  --shell) shift; set -- zsh -l ;;
+  --)      shift ;;                        # run the given command verbatim
+  *)       set -- pi "$@" ;;               # default: pi with passed args
+esac
+
+# Use a TTY only when stdin is one (cmux/interactive yes; pipes/CI no).
+tty_flag=(-i); [ -t 0 ] && [ -t 1 ] && tty_flag=(-it)
+
+exec docker exec "${tty_flag[@]}" -w "$PWD" "${env_args[@]}" -e PI_DEV_INSIDE=1 "$NAME" zsh -lc \
+  'exec "$@"' _ "$@"

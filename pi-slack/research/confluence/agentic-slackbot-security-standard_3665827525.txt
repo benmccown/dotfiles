@@ -1,0 +1,193 @@
+Agentic Slackbot Security Standard
+
+Owner
+@rharang
+
+Status
+Active
+
+Last Reviewed
+2027.07.06
+
+Approved by Mgmt.
+Yes
+
+Requirements ID
+
+Table of Contents
+
+1. Applicability
+
+This standard applies to any new or existing app/service/utility/bot/script/plugin/workflow/integration or tooling which utilizes both any NVIDIA Slack instance and AI in any form of model, harness or service in its workflow or subcomponents. This includes prototypes, pilots, development deployments, and production deployments when connected to any production NVIDIA slack instance, real NVIDIA users, or real NVIDIA data. Read-only AI usage, including summarization, classification, routing, retrieval, or recommendation, is still subject to these requirements.
+
+If your slack bot does not use AI components then it is not subject to these requirements. Should you decide to later introduce AI to your workflow you MUST go back through the acceptance policy and complete this guide. Non-AI Slack integrations are not subject to this AI-specific standard.
+
+Regulations, security concerns, and associated policies regarding data protection and AI change frequently as the industry learns more about it and regulatory bodies catch up. It is up to the project owner to make sure that the project maintains alignment with this and other requirements, including when introducing new models, providers, Slack scopes, channels/users, data sources, tools/actions, deployment environments, or network access.
+
+2. Definitions
+
+AI model – any AI / ML model that generates output based on user-provided or retrieved input, including output that may be used by a harness to trigger actions.
+
+Harness – software between an inference endpoint and user that enables the agent to use tools, generate responses, maintain conversation history, and so on.  Examples include but are not limited to:
+
+Claude Code / Cowork
+
+Cursor / Cursor CLI
+
+Codex / Codex CLI
+
+Custom integrations using LangChain, LangGraph, Crew, etc.
+
+Arbitrary code execution tool – any tool, MCP, Skill, plugin, CLI, or related feature that executes a command on the host system with AI-generated, AI-selected, or user-provided parameters.  Examples include:
+
+A bash, shell, or command line execution tool, such as those built into Claude Code, Codex, and similar harnesses
+
+Any function giving the harness the ability to run compilation, test, or interpreter scripts, such as pytest, python3, npm/npx, gcc, make, git runner, etc
+
+Any function allowing the harness to modify its own environment in a manner that could lead to code execution, including installing packages, writing to arbitrary files outside of a non-executable workspace, creating scheduled/cron jobs, updating init and system config, environment variable updates, etc.
+
+Execution environment – the environment in which an arbitrary command execution tool executes arbitrary commands
+
+Persistent secret – any secret with either of the following properties:
+
+a TTL that exceeds the minimum required for a single task, including long-lived private keys, persistent API keys, ssh keys, etc., OR
+
+any secret with the ability to create or mint additional secrets or access tokens, regardless of its own TTL.
+
+Ephemeral secret – any secret that does not meet either criteria for a persistent secret: a short-lived secret or token intended for use in a single discrete task that can then be immediately expired.  Its TTL does not exceed the lifetime of a single discrete task, and it has no capability to create or mint additional secrets or access tokens.
+
+Access-controlled source any data source where access is restricted by user, role, project, repository, channel, document, ticket, or other permission boundary.
+
+3. Requirements:
+
+3.1 General requirements
+
+All agents of any sort must comply with the guidelines given in the Agent Security Readiness site
+
+Slack bots must authenticate using bot tokens (xoxb-) scoped to minimal required OAuth scopes.  User tokens (xoxp-) and browser session tokens (xoxc-) must not be used.
+
+All source code and configurations driving the slack bot must be registered in nSpect: see nSpect registration instructions, as well as nSpect Agent Skill for a supporting Agent Skill
+
+Code scanning must be enabled
+
+Secret scanning must be enabled
+
+The nSpect registration must reflect the following information: bot owner, target deployment environment, Slack app ID, requested scopes, requested channels/users, backend tools/actions, and connected data sources.
+
+The slack bot must maintain activity logs (local or centralized) with the following information for forensic purposes:
+
+Requesting user, bot ID, channel/DM, and correlation/request ID
+
+Requested tool use, approval decision, data source accessed (if any) for any action, read, write, delete, etc
+
+Execution environment information
+
+Any available output sensitivity or classification information per the Data Classification Standard
+
+Logs must have an owner-defined retention period, access controls, and storage appropriate to the deployment environment.
+
+Logs must not contain secrets, or potentially sensitive prompt/response information; examples of such information includes, but is not limited to:
+
+Detailed prompt/response information
+
+Source code
+
+PII (other than user name/email/Slack ID required above)
+
+The slack bot must run in an approved deployment environment such as omnistation or Astra k8s
+
+3.2 Access control requirements
+
+The slack bot must only be active in predefined channels, which must be defined in a reviewed configuration that users cannot modify at runtime.
+
+The slack bot must only respond to specific, predefined users via DM; authorized users must be defined in a reviewed configuration that users cannot modify at runtime.
+
+The slack bot must respect individual user access controls when retrieving data from access-controlled sources; it may only view data accessible by the person who requested the retrieval
+
+The slack bot must not post access-controlled information to a multi-user channel without manual user approval
+
+The slack bot must not re-post private DM exchanges to a multi-user channel without manual user approval
+
+The slack bot must not mix data across “Partner”/external collaboration channels.
+
+3.3 Secret management requirements
+
+For clarity: Slack bot tokens, Slack signing secrets, app-level tokens, API keys, private keys, and credentials used to access connected data sources are all considered persistent secrets unless they meet the ephemeral secret definition above.
+
+Any required persistent secrets must be stored in an NVIDIA approved secret store, such as NV Vault (link, link, link), and retrieved on-demand.
+
+The deployment must not expose any persistent secrets directly to the harness environment OR any execution environment, including:
+
+Persistent secrets written to disk in plaintext
+
+Persistent secrets written to disk with a decryption key available to the execution tool
+
+Persistent secrets exposed as environment variables
+
+Persistent secrets hard-coded in binaries or executables present in the execution environment
+
+Persistent secrets exposed via /proc/\<id>/environ
+
+Persistent secrets must only be held in-memory by the specific process or credential broker that requires them
+
+Persistent secrets must not be permitted to enter the LLM’s context window or an execution environment
+
+Persistent secrets must be rotated or revoked when no longer required, when ownership changes, or when exposure is suspected
+
+Ephemeral secrets may be used in an execution environment, provided their TTL is minimized, scoped to the specific task, and they are revoked/rotated as soon as they are no longer required
+
+Ephemeral secrets should not be permitted to enter the agent’s context window
+
+Secrets must not be emitted in logs, prompts, responses, traces, telemetry, crash reports, error messages, or tool outputs.
+
+3.4 Network egress control requirements
+
+Each network accessible boundary (e.g. slackbot to network, execution environment to network) must be subject to network egress controls that follow the Rule of Three: the agent must ONLY access internal NVIDIA data, or ONLY external untrusted data, mixing the two is not permitted
+
+3.5 Arbitrary code execution requirements
+
+Note: this section ONLY applies to agents that expose an arbitrary code execution tool as defined above.
+
+The arbitrary code execution tool must run in an execution environment that is process and memory isolated from the harness, such as a VM, docker container, OpenShell sandbox, or other ephemeral environment
+
+Docker containers must follow the OCI container hardening standard or supplemental appropriate to their use case
+
+The execution environment must be subject to least-privilege network egress controls, permitting only the minimum network egress required to perform its function.
+
+Egress controls may either be imposed by the execution environment OR provided by the external environment in which the execution environment is launched provided that they are properly inherited
+
+The execution environment must be least privilege, allowing access only to commands and tools required to perform its function
+
+The execution environment must have a managed lifecycle, existing for the minimum amount of time required to perform its function; in particular:
+
+It must be ephemeral and rebuilt after a reasonable period of inactivity (30 minutes or less)
+
+It must have a reasonable absolute maximum lifetime enforced regardless of any ongoing activity (48 hours or less)
+
+Exceptions to the above must be approved case by case
+
+Data persistence must be managed by least scope volume mounts or equivalent and avoided where possible
+
+The execution environment may not write to agent-defined locations in the host filesystem
+
+Any data persisted to the host filesystem must be placed in predefined locations
+
+Any data persisted to the host filesystem must not be placed in a location where it may be subject to automatic execution
+
+ALL of the above controls must be enforced outside of the control plane of the agent: a system prompt instructing the agent to follow the above controls IS NOT SUFFICIENT
+
+3.6 Incident response requirements
+
+If you observe unexpected, suspicious, or insecure behavior from your bot:
+
+Immediately revoke the access tokens associated with the bot.
+
+Email csirt@nvidia.com.
+
+If the behavior appears to be adversarial or overtly malicious in nature, email csirt911@nvidia.com.
+
+Preserve the bot process and environment as much as possible to permit forensic examination.
+
+Source: This page is managed in DAC (Documentation-as-Code).
+To suggest edits, open this file in GitLab and create a merge request.
+How to contribute to DAC →
