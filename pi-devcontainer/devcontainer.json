@@ -1,0 +1,24 @@
+{
+  "name": "pi-agent",
+  "build": { "dockerfile": "Dockerfile" },
+
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+
+  "mounts": [
+    "source=pi-agent-home,target=/home/dev/.pi,type=volume",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/dev/.gitconfig,type=bind,readonly"
+  ],
+
+  "remoteUser": "dev",
+  "containerUser": "dev",
+
+  "remoteEnv": {
+    "NVIDIA_INFERENCE_API_KEY": "${localEnv:NVIDIA_INFERENCE_API_KEY}",
+    "PI_EGRESS_LOG_DIR": "/workspace/.pi-egress"
+  },
+
+  "capAdd": ["NET_ADMIN"],
+
+  "postAttachCommand": "pi --version || true"
+}
