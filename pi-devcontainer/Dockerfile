@@ -14,7 +14,7 @@ ARG HELM_VERSION=v4.2.4
 # Core + debugging/inspection tools. zsh + git for Ben's shell; python/jq/yq/
 # sqlite/rg/fd/bat/pandoc for inspection; httpie from apt; neovim (his $EDITOR).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates curl wget git gnupg jq dnsmasq zsh \
+      ca-certificates curl wget git git-lfs gnupg jq dnsmasq zsh \
       python3 python3-venv python3-pip pipx httpie \
       sqlite3 ripgrep fd-find bat tree file unzip zip xz-utils \
       pandoc neovim vim less openssh-client iproute2 dnsutils netcat-openbsd \

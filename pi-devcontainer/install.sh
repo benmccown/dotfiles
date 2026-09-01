@@ -44,9 +44,12 @@ case "${1:-up}" in
     echo "wrote ~/Code/.devcontainer — open ~/Code in VS Code -> Reopen in Container" ;;
   up|--up)
     docker image inspect "$IMG" >/dev/null 2>&1 || docker build -t "$IMG" "$HERE"
-    if docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
-      docker start "$NAME" >/dev/null && echo "started existing $NAME"
+    if docker ps --format '{{.Names}}' | grep -qx "$NAME"; then
+      echo "$NAME already running"
     else
+      # Remove any stopped container first — `docker start` on a killed one
+      # trips a stale bind-mount 'file exists' error. Recreate clean instead.
+      docker rm -f "$NAME" >/dev/null 2>&1 || true
       args=(-d --name "$NAME" --cap-add NET_ADMIN --add-host=host.docker.internal:host-gateway)
       for m in "${mounts[@]}"; do args+=(-v "$m"); done
       args+=(-e NVIDIA_INFERENCE_API_KEY -e GITHUB_TOKEN

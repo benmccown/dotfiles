@@ -37,6 +37,19 @@ fi
 # ---- unprivileged (dev) ----
 # gh auth uses $GITHUB_TOKEN from the env automatically. Your ~/.pi/agent (config,
 # installed packages, auth) and ~/.config/mcp are MOUNTED — nothing to seed.
+# Wire git HTTPS to gh's credential helper so raw `git` (pi-brain memory pushes)
+# doesn't prompt for a username. Your ~/.config/git/config is mounted READ-ONLY,
+# so point git's global config at a writable ~/.gitconfig that `include`s the
+# mounted one — gh's credential-helper write lands here, mounted settings still apply.
+export GIT_CONFIG_GLOBAL="$HOME/.gitconfig"
+if [ -f "$HOME/.config/git/config" ] && ! grep -q 'config/git/config' "$GIT_CONFIG_GLOBAL" 2>/dev/null; then
+  git config --file "$GIT_CONFIG_GLOBAL" include.path "$HOME/.config/git/config"
+fi
+[ -n "${GITHUB_TOKEN:-}" ] && gh auth setup-git >/dev/null 2>&1 || true
+# Register the git-lfs filters into the writable global config (the LFS package is
+# in the image; this wires the smudge/clean/process filters so LFS repos and their
+# pre-push/post-commit hooks work — e.g. pi-brain).
+git lfs install --skip-repo >/dev/null 2>&1 || true
 # Provider only seeded as a fallback if no mounted models.json exists.
 KEY="${PI_INFERENCE_KEY:-${NVIDIA_INFERENCE_API_KEY:-}}"
 PI_DIR="$HOME/.pi/agent"

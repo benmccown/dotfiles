@@ -24,7 +24,7 @@ docker run --rm --cap-add NET_ADMIN --add-host=host.docker.internal:host-gateway
   "$IMG" zsh -ic '
 set -e
 echo "== versions =="; node --version; pi --version | head -1; go version
-echo "== toolset =="; for b in go kubectl tsh helm eza uv nvim jq yq sqlite3 rg http kubectx gh curl; do command -v "$b" >/dev/null || { echo "  MISSING: $b"; exit 1; }; done; echo "  all present"
+echo "== toolset =="; for b in go kubectl tsh helm eza uv nvim jq yq sqlite3 rg http kubectx gh curl git-lfs; do command -v "$b" >/dev/null || { echo "  MISSING: $b"; exit 1; }; done; echo "  all present"
 echo "== shell =="; [ -f ~/.zshrc.mac ] && { echo "  mac overlay LEAKED"; exit 1; }; type wtadd >/dev/null && echo "  portable zshrc + wtadd ok"
 echo "== mounts =="
 test -d ~/Code/pi-brain && test -d ~/Code/nemo-platform && echo "  projects ok" || { echo "  projects MISSING"; exit 1; }
