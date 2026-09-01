@@ -10,6 +10,7 @@
     "source=${localEnv:HOME}/.config/mcp,target=/Users/bmccown/.config/mcp,type=bind",
     "source=${localEnv:HOME}/.config/secrets.env,target=/Users/bmccown/.config/secrets.env,type=bind,readonly",
     "source=${localEnv:HOME}/.zshrc,target=/Users/bmccown/.zshrc,type=bind,readonly",
+    "source=${localEnv:HOME}/.zshenv,target=/Users/bmccown/.zshenv,type=bind,readonly",
     "source=${localEnv:HOME}/.scripts,target=/Users/bmccown/.scripts,type=bind",
     "source=${localEnv:HOME}/.config/git,target=/Users/bmccown/.config/git,type=bind,readonly",
     "source=${localEnv:HOME}/.config/k9s,target=/Users/bmccown/.config/k9s,type=bind",

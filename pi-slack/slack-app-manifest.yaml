@@ -60,14 +60,6 @@ oauth_config:
       - reactions:write     # add/edit reactions (e.g. ack a message)
       - files:read          # see files shared in convos the bot is in
       - commands            # register slash commands
-      # --- files:write DROPPED: upload/edit/DELETE files AS the bot is the biggest
-      #     blast radius for a code agent (exfil/spoofing) and not needed. Deliberately
-      #     not requested even in the generous set. Add back only with a real need.
-    #
-    # Intentionally still NOT requested (would need admin approval anyway, not needed):
-    #   search:read (admin-gated), admin.*, any user-token (xoxp-) scopes,
-    #   channels:manage / chat:write.customize / chat:write.public, bookmarks:*,
-    #   canvases:*, pins:*  -> add later only if a concrete need appears.
 settings:
   event_subscriptions:
     bot_events:

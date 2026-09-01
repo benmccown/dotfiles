@@ -26,6 +26,7 @@ mounts=(
   "$HOME/.config/mcp:/Users/bmccown/.config/mcp"
   "$HOME/.config/secrets.env:/Users/bmccown/.config/secrets.env:ro"
   "$HOME/.zshrc:/Users/bmccown/.zshrc:ro"
+  "$HOME/.zshenv:/Users/bmccown/.zshenv:ro"
   "$HOME/.scripts:/Users/bmccown/.scripts"
   "$HOME/.config/git:/Users/bmccown/.config/git:ro"
   "$HOME/.config/k9s:/Users/bmccown/.config/k9s"
