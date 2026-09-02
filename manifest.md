@@ -22,6 +22,7 @@ idempotent reconciler so desired-state → current-state is safe to re-run.
 | component | desired state | reconciler | post-step | audience |
 |---|---|---|---|---|
 | shell + scripts + config | `home/` `scripts/` `config/` | `link.sh [--dry-run]` | populate `~/.config/secrets.env` | personal |
+| host CLI deps | `Brewfile` | `brew bundle --file=Brewfile` | — | personal |
 | MCP servers | `mcp/servers.json` | `mcp/sync-mcp.sh [--dry-run] [--only a,b]` | `/mcp-auth` in pi | shareable |
 | pi devcontainer | `pi-devcontainer/` | `pi-devcontainer/install.sh [project]` | set `NVIDIA_INFERENCE_API_KEY`; open in container | shareable |
 | nemo-platform dogfood | `nemo-platform/` | `nemo-platform/platform.sh up` | needs `NVIDIA_INFERENCE_API_KEY` | personal |
