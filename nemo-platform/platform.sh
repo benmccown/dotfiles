@@ -20,6 +20,7 @@
 #   scripts/platform.sh logs      # tail the platform log
 #   scripts/platform.sh url       # print NMP_BASE_URL
 #   scripts/platform.sh stop      # stop the tmux session (leaves data intact)
+#   scripts/platform.sh reload    # alias for redeploy (pull latest main + restart, data intact)
 #   scripts/platform.sh redeploy  # stop, git pull latest main, start again (data intact)
 #
 # Config (override via env):
@@ -233,6 +234,6 @@ case "${1:-up}" in
   logs) cmd_logs "$@" ;;
   url) cmd_url ;;
   stop) cmd_stop ;;
-  redeploy) cmd_redeploy ;;
+  reload|redeploy) cmd_redeploy ;;
   *) die "unknown command: $1 (see header for usage)" ;;
 esac

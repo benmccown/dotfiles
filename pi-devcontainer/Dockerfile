@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl wget git git-lfs gnupg jq dnsmasq zsh \
       python3 python3-venv python3-pip pipx httpie \
       sqlite3 ripgrep fd-find bat tree file unzip zip xz-utils \
-      pandoc neovim vim less openssh-client iproute2 dnsutils netcat-openbsd \
+      pandoc neovim vim less openssh-client iproute2 dnsutils netcat-openbsd socat \
       build-essential \
  && rm -rf /var/lib/apt/lists/*
 
@@ -55,7 +55,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 
 # Slack bridge extension, installed OFF the auto-discovery path (/opt/slack-bridge).
 # It stays inert — normal `pi`/`pi-dev` sessions never load it. Only the opt-in
-# `pi-slack-dev` launcher loads it for ONE session via `pi -e`. This keeps the
+# `pi-dev slack` launcher loads it for ONE session via `pi -e`. This keeps the
 # per-cmux-workspace devcontainer sessions clean; exactly one may run the bridge.
 RUN mkdir -p /opt/slack-bridge
 WORKDIR /opt/slack-bridge

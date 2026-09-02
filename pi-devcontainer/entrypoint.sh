@@ -20,6 +20,17 @@ if [ "$(id -u)" -eq 0 ]; then
   # Ensure ~/.pi exists and is dev-owned (only ~/.pi/agent is a mount; the parent
   # is created root-owned otherwise, blocking e.g. the Slack bridge config write).
   mkdir -p "$DEV_HOME/.pi"; chown "$DEV_USER" "$DEV_HOME/.pi" 2>/dev/null || true
+  # The container-private npm/node_modules named volume mounts root-owned; hand it
+  # to dev so the entrypoint's `npm install` (below) can populate it.
+  chown "$DEV_USER" "$DEV_HOME/.pi/agent/npm/node_modules" 2>/dev/null || true
+  # Forward container localhost:49500 -> the host's NeMo gateway, so the shared
+  # models.json (`nemo` provider on http://localhost:49500) works UNCHANGED both
+  # on the Mac and in here. pi does NOT expand env vars in baseUrl, and localhost
+  # can't be DNS-remapped, so a socat forwarder is the clean fix.
+  if command -v socat >/dev/null 2>&1; then
+    socat TCP-LISTEN:49500,fork,reuseaddr TCP:host.docker.internal:49500 >/dev/null 2>&1 &
+    echo "[pi-entrypoint] forwarding localhost:49500 -> host.docker.internal:49500 (NeMo gateway)"
+  fi
   UPSTREAM="$(grep -m1 '^nameserver' /etc/resolv.conf | awk '{print $2}' || true)"
   if command -v dnsmasq >/dev/null 2>&1 && [ -n "${UPSTREAM:-}" ] && [ "$UPSTREAM" != "127.0.0.1" ]; then
     dnsmasq --log-queries --log-facility="$EGRESS_LOG" \
@@ -46,6 +57,16 @@ if [ -f "$HOME/.config/git/config" ] && ! grep -q 'config/git/config' "$GIT_CONF
   git config --file "$GIT_CONFIG_GLOBAL" include.path "$HOME/.config/git/config"
 fi
 [ -n "${GITHUB_TOKEN:-}" ] && gh auth setup-git >/dev/null 2>&1 || true
+# Container-private node_modules (a named volume, so container installs don't
+# clobber the Mac's platform-native bindings). Empty on first start -> populate
+# it with the LINUX bindings pi needs. Idempotent: skips once populated.
+NPM_DIR="$HOME/.pi/agent/npm"
+if [ -f "$NPM_DIR/package.json" ] && [ ! -d "$NPM_DIR/node_modules/pi-mcp-adapter" ]; then
+  echo "[pi-entrypoint] populating container-private node_modules (first start; ~15s)..."
+  ( cd "$NPM_DIR" && npm install --no-audit --no-fund >/dev/null 2>&1 ) \
+    && echo "[pi-entrypoint] node_modules ready" \
+    || echo "[pi-entrypoint] WARN: npm install failed; run 'cd ~/.pi/agent/npm && npm install' inside the container" >&2
+fi
 # Register the git-lfs filters into the writable global config (the LFS package is
 # in the image; this wires the smudge/clean/process filters so LFS repos and their
 # pre-push/post-commit hooks work — e.g. pi-brain).

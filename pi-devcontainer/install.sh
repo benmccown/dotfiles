@@ -7,9 +7,16 @@
 #
 # Usage:
 #   ./install.sh          # up (build if needed) + attach hint
-#   ./install.sh --build  # force rebuild the image
+#   ./install.sh build    # (re)build the image
+#   ./install.sh up       # create + start the container (build if image missing)
+#   ./install.sh down      # stop the container (keeps it; `up` restarts fast)
+#   ./install.sh rm       # remove the container (forced; next `up` recreates clean)
+#   ./install.sh restart  # rm + up (recreate container, no rebuild)
+#   ./install.sh reload   # build + rm + up (rebuild image, then recreate)
 #   ./install.sh --exec   # open a zsh shell in the running container
 #   ./install.sh --vscode # write ~/Code/.devcontainer for VS Code "Reopen in Container"
+#
+# Rebuild + relaunch:  ./install.sh reload   (or: rm && build && up)
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,7 +44,11 @@ mounts=(
 
 case "${1:-up}" in
   --exec) exec docker exec -it "$NAME" zsh -l ;;
-  --build) docker build -t "$IMG" "$HERE" ;;
+  build|--build) docker build -t "$IMG" "$HERE" ;;
+  restart) "$0" rm; exec "$0" up ;;                       # recreate container, no rebuild
+  reload)  "$0" build && "$0" rm; exec "$0" up ;;          # rebuild image, then recreate
+  down|--down) docker stop "$NAME" >/dev/null 2>&1 && echo "stopped $NAME" || echo "$NAME not running" ;;
+  rm|--rm) docker rm -f "$NAME" >/dev/null 2>&1 && echo "removed $NAME" || echo "$NAME does not exist" ;;
   --vscode)
     mkdir -p "$HOME/Code/.devcontainer"
     cp "$HERE/Dockerfile" "$HERE/devcontainer.json" "$HERE/entrypoint.sh" "$HOME/Code/.devcontainer/"
@@ -52,6 +63,14 @@ case "${1:-up}" in
       docker rm -f "$NAME" >/dev/null 2>&1 || true
       args=(-d --name "$NAME" --cap-add NET_ADMIN --add-host=host.docker.internal:host-gateway)
       for m in "${mounts[@]}"; do args+=(-v "$m"); done
+      # Container-PRIVATE node_modules. ~/.pi/agent is shared with the Mac, but ALL
+      # native npm bindings live under npm/node_modules (@napi-rs/keyring, ast-grep,
+      # sharp, matrix-crypto, pi-tui prebuilds...). A Linux-container `npm install`
+      # would overwrite the Mac's darwin bindings -> keychain unreachable -> every
+      # MCP shows "credential store locked". This named volume layers a separate
+      # node_modules over the shared mount so host & container each keep their own.
+      # (Populated on first start by the entrypoint if empty.)
+      args+=(-v pi-agent-npm-modules:/Users/bmccown/.pi/agent/npm/node_modules)
       args+=(-e NVIDIA_INFERENCE_API_KEY -e GITHUB_TOKEN
              -e GITLAB_HOST=gitlab-master.nvidia.com
              -e KUBECONFIG=/Users/bmccown/teleport-kubeconfig.yaml)
@@ -62,5 +81,5 @@ case "${1:-up}" in
     echo "VS Code: Dev Containers: Attach to Running Container -> $NAME"
     echo "note: local nemo-platform is at host.docker.internal:49500 (not localhost) inside the container"
     ;;
-  *) echo "usage: $0 [up|--build|--exec|--vscode]" >&2; exit 2 ;;
+  *) echo "usage: $0 [build|up|down|rm|restart|reload|--exec|--vscode]" >&2; exit 2 ;;
 esac

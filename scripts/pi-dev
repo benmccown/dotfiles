@@ -8,34 +8,92 @@
 #   pi-dev --shell              # zsh in the container at $PWD (instead of pi)
 #   pi-dev -- <cmd> [args...]   # run an arbitrary command in the container at $PWD
 #
+# Two subcommands OVERRIDE the pi passthrough (checked before anything is sent to pi):
+#   pi-dev slack [args...]      # start ONE pi session with the Slack bridge loaded
+#   pi-dev manage <subcmd>      # container lifecycle (build|up|down|rm|restart|reload|...)
+#                               # -> forwards to pi-devcontainer/install.sh
+#
 # cmux/worktree flow: `spawn.sh <branch> --launch pi-dev` launches each worktree's
 # session in the container. Env like PI_BRAIN_VAULT_DIR is forwarded through.
 set -euo pipefail
 
 NAME="${PI_DEV_CONTAINER:-pi-agent}"
+INSTALL="$HOME/Code/dotfiles/pi-devcontainer/install.sh"
+BRIDGE=/opt/slack-bridge/node_modules/pi-messenger-bridge/dist/index.js
 
-# If we're ALREADY inside the container, just exec directly (no nested docker).
+# --- `pi-dev manage ...` — container lifecycle, forwarded to install.sh (host only) ---
+if [ "${1:-}" = "manage" ]; then
+  shift
+  [ -x "$INSTALL" ] || { echo "pi-dev: install.sh not found at $INSTALL" >&2; exit 1; }
+  exec "$INSTALL" "$@"
+fi
+
+# Guard the easy mistake: lifecycle verbs belong under `manage`, not bare (bare
+# would pass them to `pi` and launch a broken session). None collide with pi's
+# own subcommands (install/remove/update/list/config/auth).
+case "${1:-}" in
+  build|up|down|rm|restart|reload)
+    echo "pi-dev: '$1' is a container-lifecycle verb — did you mean 'pi-dev manage $1'?" >&2
+    exit 2 ;;
+esac
+
+# --- inside the container: exec directly (no nested docker) ---
 if [ -f /.dockerenv ] || [ "${PI_DEV_INSIDE:-}" = "1" ]; then
   case "${1:-}" in
+    slack)
+      shift
+      : "${PI_SLACK_BOT_TOKEN:?set PI_SLACK_BOT_TOKEN (source ~/.config/secrets.env)}"
+      : "${PI_SLACK_APP_TOKEN:?set PI_SLACK_APP_TOKEN}"
+      : "${PI_SLACK_OWNER_ID:?set PI_SLACK_OWNER_ID}"
+      [ -f "$BRIDGE" ] || { echo "pi-dev slack: bridge not found at $BRIDGE (rebuild the image)" >&2; exit 1; }
+      # Seed the single-user allowlist (fail closed via the guards above).
+      mkdir -p "$HOME/.pi"
+      cat > "$HOME/.pi/msg-bridge.json" <<JSON
+{
+  "auth": {
+    "trustedUsers": ["slack:${PI_SLACK_OWNER_ID}"],
+    "adminUserId": "slack:${PI_SLACK_OWNER_ID}"
+  },
+  "autoConnect": true,
+  "showWidget": true
+}
+JSON
+      chmod 600 "$HOME/.pi/msg-bridge.json"
+      exec pi -e "$BRIDGE" "$@" ;;   # bridge loaded for THIS session only
     --shell) shift; exec zsh -l ;;
-    --) shift; exec "$@" ;;
-    *) exec pi "$@" ;;
+    --)      shift; exec "$@" ;;
+    *)       exec pi "$@" ;;
   esac
 fi
 
+# --- on the host: dispatch into the running devcontainer ---
 command -v docker >/dev/null || { echo "pi-dev: docker not found" >&2; exit 1; }
 if ! docker ps --format '{{.Names}}' | grep -qx "$NAME"; then
   echo "pi-dev: container '$NAME' not running. Start it with:" >&2
-  echo "  ~/Code/dotfiles/pi-devcontainer/install.sh" >&2
+  echo "  pi-dev manage up" >&2
   exit 1
 fi
 
-# Forward pi-brain / PI_* env into the container (e.g. vault pinning from spawn.sh).
+# Forward pi-brain / PI_* env into the container (e.g. vault pinning from spawn.sh),
+# but STRIP the session/agent-identity vars that pi injects into ITS OWN child
+# shells. If pi-dev is run from inside a pi session, those would make the nested
+# container-pi try to resume the host's session / act as a subagent, which breaks
+# config + model discovery ("No models available"). Keep PI_BRAIN_* etc.
 env_args=()
-for v in $(env | grep -oE '^PI_[A-Z0-9_]+' || true); do env_args+=(-e "$v"); done
+for v in $(env | grep -oE '^PI_[A-Z0-9_]+' || true); do
+  case "$v" in
+    PI_SESSION_FILE|PI_SESSION_ID|PI_SUBAGENT_PARENT_SESSION|PI_CODING_AGENT) continue ;;
+  esac
+  env_args+=(-e "$v")
+done
 
-# Decide what to run inside, at the current working directory.
+# Decide what to run inside, at the current working directory. Always run as the
+# unprivileged `dev` user: that's whose HOME (/Users/bmccown) has the mounted
+# ~/.pi/agent config. Running as root (the container default) gives HOME=/root
+# with no config -> "No models available".
+docker_user=(-u dev)
 case "${1:-}" in
+  slack)   ;;                              # handled below (re-dispatch pi-dev inside)
   --shell) shift; set -- zsh -l ;;
   --)      shift ;;                        # run the given command verbatim
   *)       set -- pi "$@" ;;               # default: pi with passed args
@@ -44,5 +102,12 @@ esac
 # Use a TTY only when stdin is one (cmux/interactive yes; pipes/CI no).
 tty_flag=(-i); [ -t 0 ] && [ -t 1 ] && tty_flag=(-it)
 
-exec docker exec "${tty_flag[@]}" -w "$PWD" "${env_args[@]}" -e PI_DEV_INSIDE=1 "$NAME" zsh -lc \
+# For `slack`, re-invoke this same script inside the container so the in-container
+# branch above seeds config + loads the bridge. Otherwise run the resolved command.
+if [ "${1:-}" = "slack" ]; then
+  exec docker exec "${tty_flag[@]}" "${docker_user[@]}" -w "$PWD" "${env_args[@]}" \
+    -e PI_DEV_INSIDE=1 "$NAME" zsh -lc 'exec "$HOME/.scripts/pi-dev" "$@"' _ "$@"
+fi
+
+exec docker exec "${tty_flag[@]}" "${docker_user[@]}" -w "$PWD" "${env_args[@]}" -e PI_DEV_INSIDE=1 "$NAME" zsh -lc \
   'exec "$@"' _ "$@"
