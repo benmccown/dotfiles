@@ -1,15 +1,4 @@
 services:
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    container_name: pibrain-otel-collector
-    restart: unless-stopped
-    ports:
-      - "4318:4318"   # OTLP/HTTP (pi-brain pushes metrics + traces here)
-      - "4317:4317"   # OTLP/gRPC
-      - "8889:8889"   # Prometheus scrape (collector re-exports metrics)
-    volumes:
-      - ./otel-collector/config.yml:/etc/otelcol-contrib/config.yaml:ro
-
   prometheus:
     image: prom/prometheus:latest
     container_name: pibrain-prometheus
@@ -19,14 +8,14 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./data/prometheus:/prometheus
-    extra_hosts:
-      # Let the container reach pi-brain's Prometheus endpoint on the host.
-      - "host.docker.internal:host-gateway"
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
       - "--storage.tsdb.retention.time=30d"
       - "--web.enable-lifecycle"
+      # Native OTLP push ingestion: pi-brain pushes OTLP metrics straight here
+      # (POST /api/v1/otlp/v1/metrics). No collector needed.
+      - "--web.enable-otlp-receiver"
 
   grafana:
     image: grafana/grafana:latest
