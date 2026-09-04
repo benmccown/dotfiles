@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  # OTEL collector's Prometheus re-export (the PUSH path: pi-brain pushes OTLP
+  # metrics to the collector, which exposes them here for scraping). This is the
+  # reliable path for a short-lived headless `pi -p` pass (metrics force-flush on
+  # shutdown).
+  - job_name: otel-collector
+    static_configs:
+      - targets: ["otel-collector:8889"]
+        labels:
+          service: pi-brain
+
+  # pi-brain's OWN OTEL Prometheus metrics endpoint (the PULL path: the
+  # PrometheusExporter reader). Only populated when a long-lived pi process is up
+  # with OTEL_METRICS_EXPORTER=prometheus.
+  - job_name: pi-brain
+    static_configs:
+      - targets: ["host.docker.internal:9464"]
+        labels:
+          service: pi-brain
+
+  # Prometheus self-monitoring (sanity check the stack is up).
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

@@ -1,0 +1,94 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "title": "pi-brain verbs",
+  "uid": "pibrain-verbs",
+  "schemaVersion": 39,
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Token spend per verb (input + output, cumulative)",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum by (verb) (pibrain_verb_input_tokens_total + pibrain_verb_output_tokens_total)",
+          "legendFormat": "{{verb}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Output magnitude per verb (work total)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum by (verb) (pibrain_verb_work_total)",
+          "legendFormat": "{{verb}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Verb runs (rate) — spikes/troughs/flatlines",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum by (verb) (increase(pibrain_verb_runs_total[10m]))",
+          "legendFormat": "{{verb}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Verb duration p95 (ms)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, verb) (rate(pibrain_verb_duration_ms_bucket[5m])))",
+          "legendFormat": "{{verb}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "type": "table",
+      "title": "Cost vs output (tokens & work per verb)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 18 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "expr": "sum by (verb) (pibrain_verb_input_tokens_total + pibrain_verb_output_tokens_total)",
+          "legendFormat": "tokens {{verb}}",
+          "format": "table",
+          "instant": true
+        },
+        {
+          "expr": "sum by (verb) (pibrain_verb_work_total)",
+          "legendFormat": "work {{verb}}",
+          "format": "table",
+          "instant": true
+        }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus", "value": "Prometheus" },
+        "hide": 0
+      }
+    ]
+  }
+}
