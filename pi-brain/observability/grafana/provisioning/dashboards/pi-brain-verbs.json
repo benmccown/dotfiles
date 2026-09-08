@@ -2,70 +2,56 @@
   "uid": "pibrain-verbs",
   "title": "pi-brain verbs",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "editable": true,
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
+  "time": { "from": "now-24h", "to": "now" },
   "refresh": "30s",
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "run_id",
+        "label": "Maintenance run",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+        "query": {
+          "query": "label_values(pibrain_verb_runs_total, run_id)",
+          "refId": "run_id"
+        },
+        "sort": 4,
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
+      }
+    ]
   },
   "panels": [
     {
       "type": "row",
-      "title": "Per-verb (latest maintenance run)",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
+      "title": "Per-verb — selected run ($run_id)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "collapsed": false,
       "panels": []
     },
     {
       "type": "barchart",
-      "title": "Token spend per verb (input + output)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "pibrain-prometheus"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 1
-      },
+      "title": "Token spend per verb (input + output) — $run_id",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 1 },
       "options": {
         "orientation": "horizontal",
-        "xTickLabelRotation": 0,
         "showValue": "always",
-        "legend": {
-          "showLegend": false,
-          "displayMode": "hidden"
-        },
-        "tooltip": {
-          "mode": "single"
-        }
+        "legend": { "showLegend": false, "displayMode": "hidden" },
+        "tooltip": { "mode": "single" }
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          }
-        },
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } },
         "overrides": []
       },
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "pibrain-prometheus"
-          },
-          "expr": "sum by (verb) (last_over_time(pibrain_verb_input_tokens_total[6h]) + last_over_time(pibrain_verb_output_tokens_total[6h]))",
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (verb) (last_over_time(pibrain_verb_input_tokens_total{run_id=\"$run_id\"}[24h]) + last_over_time(pibrain_verb_output_tokens_total{run_id=\"$run_id\"}[24h]))",
           "format": "table",
           "instant": true,
           "legendFormat": "{{verb}}",
@@ -75,45 +61,23 @@
     },
     {
       "type": "barchart",
-      "title": "Duration per verb (seconds)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "pibrain-prometheus"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 1
-      },
+      "title": "Duration per verb (seconds) — $run_id",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 1 },
       "options": {
         "orientation": "horizontal",
-        "xTickLabelRotation": 0,
         "showValue": "always",
-        "legend": {
-          "showLegend": false,
-          "displayMode": "hidden"
-        },
-        "tooltip": {
-          "mode": "single"
-        }
+        "legend": { "showLegend": false, "displayMode": "hidden" },
+        "tooltip": { "mode": "single" }
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "color": {
-            "mode": "palette-classic"
-          }
-        },
+        "defaults": { "unit": "s", "color": { "mode": "palette-classic" } },
         "overrides": []
       },
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "pibrain-prometheus"
-          },
-          "expr": "sum by (verb) (last_over_time(pibrain_verb_duration_ms_milliseconds_sum[6h])) / 1000",
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (verb) (last_over_time(pibrain_verb_duration_ms_milliseconds_sum{run_id=\"$run_id\"}[24h])) / 1000",
           "format": "table",
           "instant": true,
           "legendFormat": "{{verb}}",
@@ -123,45 +87,23 @@
     },
     {
       "type": "barchart",
-      "title": "Output magnitude per verb (work done)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "pibrain-prometheus"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 10
-      },
+      "title": "Output magnitude per verb (work done) — $run_id",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 10 },
       "options": {
         "orientation": "horizontal",
-        "xTickLabelRotation": 0,
         "showValue": "always",
-        "legend": {
-          "showLegend": false,
-          "displayMode": "hidden"
-        },
-        "tooltip": {
-          "mode": "single"
-        }
+        "legend": { "showLegend": false, "displayMode": "hidden" },
+        "tooltip": { "mode": "single" }
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "palette-classic"
-          }
-        },
+        "defaults": { "unit": "short", "color": { "mode": "palette-classic" } },
         "overrides": []
       },
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "pibrain-prometheus"
-          },
-          "expr": "sum by (verb) (last_over_time(pibrain_verb_work_total[6h]))",
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (verb) (last_over_time(pibrain_verb_work_total{run_id=\"$run_id\"}[24h]))",
           "format": "table",
           "instant": true,
           "legendFormat": "{{verb}}",
@@ -171,73 +113,43 @@
     },
     {
       "type": "table",
-      "title": "Cost vs output per verb",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "pibrain-prometheus"
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 10
-      },
+      "title": "Cost vs output per verb — $run_id",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 10 },
       "options": {
         "showHeader": true,
-        "sortBy": [
-          {
-            "displayName": "tokens",
-            "desc": true
-          }
-        ]
+        "sortBy": [{ "displayName": "tokens", "desc": true }]
       },
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "pibrain-prometheus"
-          },
-          "expr": "sum by (verb) (last_over_time(pibrain_verb_input_tokens_total[6h]) + last_over_time(pibrain_verb_output_tokens_total[6h]))",
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (verb) (last_over_time(pibrain_verb_input_tokens_total{run_id=\"$run_id\"}[24h]) + last_over_time(pibrain_verb_output_tokens_total{run_id=\"$run_id\"}[24h]))",
           "format": "table",
           "instant": true,
           "refId": "tokens"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "pibrain-prometheus"
-          },
-          "expr": "sum by (verb) (last_over_time(pibrain_verb_duration_ms_milliseconds_sum[6h])) / 1000",
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (verb) (last_over_time(pibrain_verb_duration_ms_milliseconds_sum{run_id=\"$run_id\"}[24h])) / 1000",
           "format": "table",
           "instant": true,
           "refId": "duration_s"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "pibrain-prometheus"
-          },
-          "expr": "sum by (verb) (last_over_time(pibrain_verb_work_total[6h]))",
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (verb) (last_over_time(pibrain_verb_work_total{run_id=\"$run_id\"}[24h]))",
           "format": "table",
           "instant": true,
           "refId": "work"
         }
       ],
       "transformations": [
-        {
-          "id": "merge",
-          "options": {}
-        },
+        { "id": "merge", "options": {} },
         {
           "id": "organize",
           "options": {
-            "excludeByName": {
-              "Time": true
-            },
+            "excludeByName": { "Time": true },
             "renameByName": {
               "verb": "verb",
               "Value #tokens": "tokens",
@@ -250,57 +162,30 @@
     },
     {
       "type": "row",
-      "title": "Whole-pass rollup (all verbs summed)",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 19
-      },
+      "title": "Selected-run totals ($run_id)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 19 },
       "collapsed": false,
       "panels": []
     },
     {
       "type": "stat",
-      "title": "Total tokens per maintenance run (in + out)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "pibrain-prometheus"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 0,
-        "y": 20
-      },
+      "title": "Total tokens this run (in + out)",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 20 },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "colorMode": "value",
         "graphMode": "none",
         "textMode": "value"
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          }
-        },
+        "defaults": { "unit": "short", "color": { "mode": "thresholds" } },
         "overrides": []
       },
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "pibrain-prometheus"
-          },
-          "expr": "sum (last_over_time(pibrain_verb_input_tokens_total[6h]) + last_over_time(pibrain_verb_output_tokens_total[6h]))",
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum (last_over_time(pibrain_verb_input_tokens_total{run_id=\"$run_id\"}[24h]) + last_over_time(pibrain_verb_output_tokens_total{run_id=\"$run_id\"}[24h]))",
           "instant": true,
           "refId": "A"
         }
@@ -308,45 +193,23 @@
     },
     {
       "type": "stat",
-      "title": "Total pass duration (all verbs, seconds)",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "pibrain-prometheus"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 8,
-        "y": 20
-      },
+      "title": "Pass wall-clock duration this run",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 20 },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "colorMode": "value",
         "graphMode": "none",
         "textMode": "value"
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "color": {
-            "mode": "thresholds"
-          }
-        },
+        "defaults": { "unit": "ms", "color": { "mode": "thresholds" } },
         "overrides": []
       },
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "pibrain-prometheus"
-          },
-          "expr": "sum (last_over_time(pibrain_verb_duration_ms_milliseconds_sum[6h])) / 1000",
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum (last_over_time(pibrain_pass_duration_ms_milliseconds_sum{run_id=\"$run_id\"}[24h]))",
           "instant": true,
           "refId": "A"
         }
@@ -354,46 +217,85 @@
     },
     {
       "type": "stat",
-      "title": "Total input tokens per run",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "pibrain-prometheus"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 16,
-        "y": 20
-      },
+      "title": "Total input tokens this run",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 20 },
       "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
         "colorMode": "value",
         "graphMode": "none",
         "textMode": "value"
       },
       "fieldConfig": {
+        "defaults": { "unit": "short", "color": { "mode": "thresholds" } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum (last_over_time(pibrain_verb_input_tokens_total{run_id=\"$run_id\"}[24h]))",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Run-over-run trend (all runs)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Total tokens per run (compare runs over time)",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 27 },
+      "options": {
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          }
+          "custom": { "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1, "pointSize": 6 },
+          "color": { "mode": "palette-classic" }
         },
         "overrides": []
       },
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "pibrain-prometheus"
-          },
-          "expr": "sum (last_over_time(pibrain_verb_input_tokens_total[6h]))",
-          "instant": true,
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (run_id) (pibrain_verb_input_tokens_total + pibrain_verb_output_tokens_total)",
+          "instant": false,
+          "legendFormat": "{{run_id}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "clean-link tokens per run (did tuning help?)",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 27 },
+      "options": {
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1, "pointSize": 6 },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (run_id) (pibrain_verb_input_tokens_total{verb=\"clean-link\"} + pibrain_verb_output_tokens_total{verb=\"clean-link\"})",
+          "instant": false,
+          "legendFormat": "{{run_id}}",
           "refId": "A"
         }
       ]
