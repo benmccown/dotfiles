@@ -170,10 +170,6 @@
           "title": "nemo-platform"
         },
         {
-          "action": "remote-nemo-platform",
-          "title": "remote nemo-platform (Omnistation)"
-        },
-        {
           "action": "general",
           "title": "general (~/Code)"
         },
@@ -203,7 +199,8 @@
         "cmux.newBrowser",
         "cmux.splitRight",
         "cmux.splitDown",
-        "pi-here"
+        "pi-here",
+        "remote-nemo-platform"
       ]
     }
   },
