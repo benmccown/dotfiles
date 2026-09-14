@@ -1,0 +1,242 @@
+{
+  "uid": "pibrain-crawl",
+  "title": "pi-brain crawl/improve",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "time": { "from": "now-7d", "to": "now" },
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "run_id",
+        "label": "brain refresh run",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+        "query": { "query": "label_values(pibrain_crawl_runs_total, run_id)", "refId": "run_id" },
+        "sort": 4,
+        "refresh": 2,
+        "includeAll": false,
+        "multi": false,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Whole refresh ($run_id)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Total tokens this refresh (in + out)",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value", "graphMode": "none", "textMode": "value"
+      },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum(last_over_time(pibrain_crawl_input_tokens_total{run_id=\"$run_id\"}[7d]) + last_over_time(pibrain_crawl_output_tokens_total{run_id=\"$run_id\"}[7d]))",
+          "instant": true, "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Commits crawled this refresh",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value", "graphMode": "none", "textMode": "value"
+      },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" } }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum(last_over_time(pibrain_crawl_runs_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
+          "instant": true, "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Longest project wall-clock this refresh",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 1 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "value", "graphMode": "none", "textMode": "value"
+      },
+      "fieldConfig": { "defaults": { "unit": "ms", "color": { "mode": "thresholds" } }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "max(last_over_time(pibrain_crawl_duration_ms_milliseconds_sum{run_id=\"$run_id\",kind=\"project\"}[7d]))",
+          "instant": true, "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Per project ($run_id)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "barchart",
+      "title": "Tokens per project (commit-crawl, in + out)",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+      "options": {
+        "orientation": "horizontal", "showValue": "always",
+        "legend": { "showLegend": false, "displayMode": "hidden" },
+        "tooltip": { "mode": "single" }
+      },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (project) (last_over_time(pibrain_crawl_input_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]) + last_over_time(pibrain_crawl_output_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
+          "format": "table", "instant": true, "legendFormat": "{{project}}", "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Wall-clock per project (seconds)",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+      "options": {
+        "orientation": "horizontal", "showValue": "always",
+        "legend": { "showLegend": false, "displayMode": "hidden" },
+        "tooltip": { "mode": "single" }
+      },
+      "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (project) (last_over_time(pibrain_crawl_duration_ms_milliseconds_sum{run_id=\"$run_id\",kind=\"project\"}[7d])) / 1000",
+          "format": "table", "instant": true, "legendFormat": "{{project}}", "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Per commit & release ($run_id)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Per-commit cost (tokens + duration)",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 16 },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "tokens", "desc": true }] },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (project, ref) (last_over_time(pibrain_crawl_input_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]) + last_over_time(pibrain_crawl_output_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
+          "format": "table", "instant": true, "refId": "tokens"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (project, ref) (last_over_time(pibrain_crawl_duration_ms_milliseconds_sum{run_id=\"$run_id\",kind=\"commit\"}[7d])) / 1000",
+          "format": "table", "instant": true, "refId": "duration_s"
+        }
+      ],
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "renameByName": {
+              "project": "project",
+              "ref": "commit",
+              "Value #tokens": "tokens",
+              "Value #duration_s": "duration (s)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Per-release cost (tokens + duration)",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 16 },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "tokens", "desc": true }] },
+      "fieldConfig": { "defaults": {}, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (project, ref) (last_over_time(pibrain_crawl_input_tokens_total{run_id=\"$run_id\",kind=\"release\"}[7d]) + last_over_time(pibrain_crawl_output_tokens_total{run_id=\"$run_id\",kind=\"release\"}[7d]))",
+          "format": "table", "instant": true, "refId": "tokens"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (project, ref) (last_over_time(pibrain_crawl_duration_ms_milliseconds_sum{run_id=\"$run_id\",kind=\"release\"}[7d])) / 1000",
+          "format": "table", "instant": true, "refId": "duration_s"
+        }
+      ],
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true },
+            "renameByName": {
+              "project": "project",
+              "ref": "release",
+              "Value #tokens": "tokens",
+              "Value #duration_s": "duration (s)"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Refresh-over-refresh trend (all runs)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Total tokens per refresh (compare runs)",
+      "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 27 },
+      "options": {
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "bars", "fillOpacity": 70, "lineWidth": 1, "pointSize": 6 },
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (run_id) (pibrain_crawl_input_tokens_total + pibrain_crawl_output_tokens_total)",
+          "instant": false, "legendFormat": "{{run_id}}", "refId": "A"
+        }
+      ]
+    }
+  ]
+}
