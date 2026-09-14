@@ -38,6 +38,10 @@ alias vim="nvim"
 alias tf="terraform"
 alias kgpu="kubectl view-allocations -r nvidia.com/gpu"
 alias gh-docker-login="echo \$GITHUB_TOKEN | docker login ghcr.io -u benmccown --password-stdin"
+# Open the Omnistation box as a cmux remote-SSH workspace (env set; type pi when wanted).
+# Run this from ANY existing cmux terminal — it creates exactly ONE workspace
+# (cmux ssh always makes its own; running it in-place avoids a host workspace).
+alias remote-nemo="cmux ssh bmccown@omni-lsn-7bde6.ext-nv-prd-apps.teleport.sh --name 'remote nemo-platform' --command 'cd ~/Code/nemo-platform'"
 
 # --- git worktree helpers ---
 wtadd() {
