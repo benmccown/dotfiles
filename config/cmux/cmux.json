@@ -222,7 +222,9 @@
     "remote-nemo-platform": {
       "type": "command",
       "title": "remote nemo-platform (Omnistation)",
-      "command": "cmux ssh bmccown@omni-lsn-7bde6.ext-nv-prd-apps.teleport.sh --name 'remote nemo-platform' --command 'cd ~/Code/nemo-platform'"
+      "subtitle": "cmux ssh into the box + cd ~/Code/nemo-platform",
+      "command": "cmux ssh bmccown@omni-lsn-7bde6.ext-nv-prd-apps.teleport.sh --name 'remote nemo-platform' --command 'cd ~/Code/nemo-platform'",
+      "target": "newTabInCurrentPane"
     },
     "general": {
       "type": "workspaceCommand",
