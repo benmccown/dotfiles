@@ -22,6 +22,7 @@ LINKS=(
   "scripts:$HOME/.scripts"
   "config/git:$HOME/.config/git"
   "config/k9s:$HOME/.config/k9s"
+  "config/cmux/cmux.json:$HOME/.config/cmux/cmux.json"
 )
 
 link() {

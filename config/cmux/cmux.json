@@ -1,0 +1,432 @@
+{
+  "$schema": "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux.schema.json",
+  "schemaVersion": 1,
+
+  // This file uses JSON with comments (JSONC).
+  // ACTIVE blocks (commands/ui/actions + our shortcut overrides) are UNCOMMENTED below.
+  // The commented sections are the full DEFAULT reference (cmux 0.64.x): uncomment a key
+  // to make it file-managed; remove it to fall back to the built-in default. Reload with
+  // Cmd+Shift+, (or `cmux reload-config`).
+
+  // ===== ACTIVE: custom workspace commands, + menu, tab-bar buttons =====
+  "commands": [
+    {
+      "name": "pi-brain",
+      "description": "Open ~/Code/pi-brain: pi session + a bare shell tab",
+      "keywords": [
+        "pi-brain",
+        "brain",
+        "pi"
+      ],
+      "workspace": {
+        "name": "pi-brain",
+        "cwd": "~/Code/pi-brain",
+        "restart": "ignore",
+        "layout": {
+          "pane": {
+            "surfaces": [
+              {
+                "type": "terminal",
+                "name": "pi",
+                "command": "pi",
+                "focus": true
+              },
+              {
+                "type": "terminal",
+                "name": "shell"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "nemo-platform",
+      "description": "Open ~/Code/nemo-platform: pi session + a bare shell tab",
+      "keywords": [
+        "nemo",
+        "nmp",
+        "platform",
+        "pi"
+      ],
+      "workspace": {
+        "name": "nemo-platform",
+        "cwd": "~/Code/nemo-platform",
+        "restart": "ignore",
+        "layout": {
+          "pane": {
+            "surfaces": [
+              {
+                "type": "terminal",
+                "name": "pi",
+                "command": "pi",
+                "focus": true
+              },
+              {
+                "type": "terminal",
+                "name": "shell"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "general",
+      "description": "Open ~/Code: pi session + a bare shell tab",
+      "keywords": [
+        "general",
+        "code",
+        "scratch",
+        "pi"
+      ],
+      "workspace": {
+        "name": "general",
+        "cwd": "~/Code",
+        "restart": "new",
+        "layout": {
+          "pane": {
+            "surfaces": [
+              {
+                "type": "terminal",
+                "name": "pi",
+                "command": "pi",
+                "focus": true
+              },
+              {
+                "type": "terminal",
+                "name": "shell"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Worktree Agent",
+      "description": "Pick a ~/Code repo + branch, spin up a git worktree, and open a fresh pi session in it",
+      "keywords": [
+        "worktree",
+        "agent",
+        "branch",
+        "parallel",
+        "spawn"
+      ],
+      "workspace": {
+        "name": "worktree-agent",
+        "cwd": "~/Code",
+        "restart": "new",
+        "layout": {
+          "pane": {
+            "surfaces": [
+              {
+                "type": "terminal",
+                "name": "worktree",
+                "focus": true,
+                "command": "~/Code/pi-brain/brain/memory/skills/worktree-agent/scripts/pick-worktree.sh"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "remote nemo-platform",
+      "description": "Open ~/Code/nemo-platform on the Omnistation box (cmux remote-SSH workspace) with a pi session",
+      "keywords": [
+        "remote",
+        "omnistation",
+        "nemo",
+        "nmp",
+        "box",
+        "ssh",
+        "pi"
+      ],
+      "workspace": {
+        "name": "remote nemo-platform launcher",
+        "cwd": "~",
+        "restart": "new",
+        "layout": {
+          "pane": {
+            "surfaces": [
+              {
+                "type": "terminal",
+                "name": "launch",
+                "focus": true,
+                "command": "cmux ssh bmccown@omni-lsn-7bde6.ext-nv-prd-apps.teleport.sh --name 'remote nemo-platform' --command 'cd ~/Code/nemo-platform'"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "Open in Viewer",
+      "description": "Render the current directory's README.md in a live-reloading cmux markdown panel",
+      "keywords": [
+        "markdown",
+        "viewer",
+        "readme",
+        "preview",
+        "render"
+      ],
+      "command": "cmux markdown open README.md --direction right --focus false"
+    }
+  ],
+
+  "ui": {
+    "newWorkspace": {
+      "contextMenu": [
+        {
+          "action": "pi-brain",
+          "title": "pi-brain"
+        },
+        {
+          "action": "nemo-platform",
+          "title": "nemo-platform"
+        },
+        {
+          "action": "remote-nemo-platform",
+          "title": "remote nemo-platform (Omnistation)"
+        },
+        {
+          "action": "general",
+          "title": "general (~/Code)"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "action": "worktree-agent",
+          "title": "Worktree Agent\u2026"
+        },
+        {
+          "type": "separator"
+        },
+        {
+          "action": "cmux.newTerminal",
+          "title": "New Terminal"
+        },
+        {
+          "action": "cmux.newBrowser",
+          "title": "New Browser"
+        }
+      ]
+    },
+    "surfaceTabBar": {
+      "buttons": [
+        "cmux.newTerminal",
+        "cmux.newBrowser",
+        "cmux.splitRight",
+        "cmux.splitDown",
+        "pi-here"
+      ]
+    }
+  },
+
+  "actions": {
+    "pi-brain": {
+      "type": "workspaceCommand",
+      "title": "pi-brain",
+      "commandName": "pi-brain"
+    },
+    "nemo-platform": {
+      "type": "workspaceCommand",
+      "title": "nemo-platform",
+      "commandName": "nemo-platform"
+    },
+    "remote-nemo-platform": {
+      "type": "workspaceCommand",
+      "title": "remote nemo-platform (Omnistation)",
+      "commandName": "remote nemo-platform"
+    },
+    "general": {
+      "type": "workspaceCommand",
+      "title": "general (~/Code)",
+      "commandName": "general"
+    },
+    "worktree-agent": {
+      "type": "workspaceCommand",
+      "title": "Worktree Agent\u2026",
+      "commandName": "Worktree Agent"
+    },
+    "pi-here": {
+      "type": "command",
+      "title": "pi",
+      "subtitle": "Start a pi session in a new tab here",
+      "command": "pi",
+      "target": "newTabInCurrentPane",
+      "shortcut": "cmd+shift+i",
+      "icon": {
+        "type": "emoji",
+        "value": "\u03c0",
+        "scale": 1.0
+      }
+    }
+  },
+
+  // ===== ACTIVE: keyboard shortcut overrides (ported from Ben's Cursor keybindings) =====
+  //   cmd+ctrl+h / cmd+ctrl+l : prev/next WORKSPACE (sidebar tab)
+  //   cmd+ctrl+,             : rename the WORKSPACE (sidebar tab) [renameWorkspace]
+  //   cmd+ctrl+.             : rename the SURFACE/tab (in-pane tab) [renameTab]
+  //                            (displaces default toggleFocusedWorkspaceGroupCollapsed)
+  //   cmd+ctrl+n             : new WORKSPACE [newTab] (frees default cmd+n)
+  //   cmd+opt+p              : command palette (frees default cmd+shift+p)
+  // Only these keys are overridden; every other binding uses the cmux default
+  // shown (commented) in the reference block that follows.
+  "shortcuts": {
+    "bindings": {
+      "prevSidebarTab": "cmd+ctrl+h",
+      "nextSidebarTab": "cmd+ctrl+l",
+      "renameWorkspace": "cmd+ctrl+,",
+      "renameTab": "cmd+ctrl+.",
+      "commandPalette": "cmd+opt+p",
+      "newTab": "cmd+ctrl+n"
+    }
+  },
+
+  // ===== REFERENCE (commented): full cmux default keybindings =====
+  // Uncomment + move a key into the active "shortcuts.bindings" above to override it.
+  // "shortcuts": {
+  //   "bindings": {
+  //     "openSettings": "cmd+,",
+  //     "reloadConfiguration": "cmd+shift+,",
+  //     "showHideAllWindows": "cmd+ctrl+opt+.",
+  //     "globalSearch": "cmd+opt+f",
+  //     "newWindow": "cmd+shift+n",
+  //     "closeWindow": "cmd+ctrl+w",
+  //     "toggleFullScreen": "cmd+ctrl+f",
+  //     "quit": "cmd+q",
+  //     "toggleSidebar": "cmd+b",
+  //     "newTab": "cmd+n",   // <-- OVERRIDDEN above
+  //     "newBrowserWorkspace": "cmd+opt+n",
+  //     "saveLayoutTemplate": "cmd+ctrl+s",
+  //     "openFolder": "cmd+o",
+  //     "reopenPreviousSession": "cmd+shift+o",
+  //     "goToWorkspace": "cmd+p",
+  //     "commandPalette": "cmd+shift+p",   // <-- OVERRIDDEN above
+  //     "commandPaletteNext": "ctrl+n",
+  //     "commandPalettePrevious": "ctrl+p",
+  //     "showNotifications": "cmd+i",
+  //     "jumpToUnread": "cmd+shift+u",
+  //     "toggleUnread": "cmd+opt+u",
+  //     "markOldestUnreadAndJumpNext": "cmd+ctrl+u",
+  //     "focusRightSidebar": "cmd+shift+e",
+  //     "switchRightSidebarToFiles": "ctrl+1",
+  //     "switchRightSidebarToFind": "ctrl+2",
+  //     "switchRightSidebarToSessions": "ctrl+3",
+  //     "switchRightSidebarToFeed": "ctrl+4",
+  //     "switchRightSidebarToDock": "ctrl+5",
+  //     "switchRightSidebarToMachines": "ctrl+6",
+  //     "triggerFlash": "cmd+shift+h",
+  //     "nextSidebarTab": "cmd+ctrl+]",   // <-- OVERRIDDEN above
+  //     "prevSidebarTab": "cmd+ctrl+[",   // <-- OVERRIDDEN above
+  //     "focusHistoryBack": "cmd+[",
+  //     "focusHistoryForward": "cmd+]",
+  //     "renameTab": "cmd+r",   // <-- OVERRIDDEN above (now cmd+ctrl+.)
+  //     "renameWorkspace": "cmd+shift+r",   // <-- OVERRIDDEN above (now cmd+ctrl+,)
+  //     "editWorkspaceDescription": "cmd+opt+e",
+  //     "markWorkspaceDone": "cmd+;",
+  //     "cycleWorkspaceStatus": "cmd+shift+;",
+  //     "toggleChecklistItemComplete": "cmd+\r",
+  //     "closeTab": "cmd+w",
+  //     "closeOtherTabsInPane": "cmd+opt+t",
+  //     "closeWorkspace": "cmd+shift+w",
+  //     "newWorkspaceGroup": "cmd+ctrl+g",
+  //     "groupSelectedWorkspaces": "cmd+shift+g",
+  //     "toggleFocusedWorkspaceGroupCollapsed": "cmd+ctrl+.",   // <-- DISPLACED (cmd+ctrl+. now renames the tab; this is unbound unless rebound)
+  //     "reopenClosedBrowserPanel": "cmd+shift+t",
+  //     "focusLeft": "cmd+opt+←",
+  //     "focusRight": "cmd+opt+→",
+  //     "focusUp": "cmd+opt+↑",
+  //     "focusDown": "cmd+opt+↓",
+  //     "splitRight": "cmd+d",
+  //     "splitDown": "cmd+shift+d",
+  //     "toggleSplitZoom": "cmd+shift+\r",
+  //     "increaseWorkspaceTerminalFontSize": "cmd+ctrl+=",
+  //     "decreaseWorkspaceTerminalFontSize": "cmd+ctrl+-",
+  //     "resetWorkspaceTerminalFontSize": "cmd+ctrl+0",
+  //     "equalizeSplits": "cmd+ctrl+shift+=",
+  //     "splitBrowserRight": "cmd+opt+d",
+  //     "splitBrowserDown": "cmd+opt+shift+d",
+  //     "toggleCanvasLayout": "cmd+ctrl+c",
+  //     "canvasRevealFocusedPane": "cmd+ctrl+r",
+  //     "canvasOverview": "cmd+ctrl+o",
+  //     "canvasZoomIn": "cmd+opt+=",
+  //     "canvasZoomOut": "cmd+opt+-",
+  //     "canvasZoomReset": "cmd+0",
+  //     "canvasTidy": "cmd+ctrl+t",
+  //     "nextSurface": "cmd+shift+]",
+  //     "prevSurface": "cmd+shift+[",
+  //     "moveSurfaceLeft": "cmd+opt+shift+[",
+  //     "moveSurfaceRight": "cmd+opt+shift+]",
+  //     "moveSurfaceToPreviousPane": "cmd+ctrl+shift+[",
+  //     "moveSurfaceToNextPane": "cmd+ctrl+shift+]",
+  //     "moveSurfaceToPaneLeft": "cmd+opt+shift+←",
+  //     "moveSurfaceToPaneRight": "cmd+opt+shift+→",
+  //     "moveSurfaceToPaneUp": "cmd+opt+shift+↑",
+  //     "moveSurfaceToPaneDown": "cmd+opt+shift+↓",
+  //     "selectSurfaceByNumber": "ctrl+1",
+  //     "selectWorkspaceByNumber": "cmd+1",
+  //     "moveWorkspaceUp": "cmd+ctrl+opt+[",
+  //     "moveWorkspaceDown": "cmd+ctrl+opt+]",
+  //     "newSurface": "cmd+t",
+  //     "toggleTerminalCopyMode": "cmd+shift+m",
+  //     "focusTextBoxInput": "cmd+shift+a",
+  //     "cycleTextBoxSubmitAction": "shift+\t",
+  //     "attachTextBoxFile": "cmd+opt+shift+a",
+  //     "clearScreenKeepScrollback": "cmd+shift+k",
+  //     "toggleRightSidebar": "cmd+opt+b",
+  //     "fileExplorerOpenSelection": "\r",
+  //     "fileExplorerOpenSelectionFinderAlias": "cmd+↓",
+  //     "openDiffViewer": "cmd+ctrl+shift+d",
+  //     "saveFilePreview": "cmd+s",
+  //     "openBrowser": "cmd+shift+l",
+  //     "focusBrowserAddressBar": "cmd+l",
+  //     "browserBack": "cmd+[",
+  //     "browserForward": "cmd+]",
+  //     "browserReload": "cmd+r",
+  //     "browserHardReload": "cmd+shift+r",
+  //     "browserZoomIn": "cmd+=",
+  //     "browserZoomOut": "cmd+-",
+  //     "browserZoomReset": "cmd+0",
+  //     "markdownZoomIn": "cmd+=",
+  //     "markdownZoomOut": "cmd+-",
+  //     "markdownZoomReset": "cmd+0",
+  //     "find": "cmd+f",
+  //     "findInDirectory": "cmd+shift+f",
+  //     "findNext": "cmd+g",
+  //     "findPrevious": "cmd+opt+g",
+  //     "hideFind": "cmd+opt+shift+f",
+  //     "useSelectionForFind": "cmd+e",
+  //     "toggleBrowserDeveloperTools": "cmd+opt+i",
+  //     "showBrowserJavaScriptConsole": "cmd+opt+c",
+  //     "toggleBrowserFocusMode": "cmd+opt+\r",
+  //     "toggleBrowserDesignMode": "cmd+ctrl+opt+d",
+  //     "toggleReactGrab": "cmd+shift+g",
+  //     "diffViewerScrollDown": "j",
+  //     "diffViewerScrollUp": "k",
+  //     "diffViewerScrollHalfPageDown": "ctrl+d",
+  //     "diffViewerScrollHalfPageUp": "ctrl+u",
+  //     "diffViewerScrollDownEmacs": "ctrl+n",
+  //     "diffViewerScrollUpEmacs": "ctrl+p",
+  //     "diffViewerScrollToBottom": "shift+g",
+  //     "diffViewerOpenFileSearch": "/",
+  //     "simulatorHome": "cmd+shift+h",
+  //     "simulatorRotateLeft": "cmd+←",
+  //     "simulatorRotateRight": "cmd+→",
+  //     "simulatorToggleAppearance": "cmd+shift+a",
+  //     "simulatorToggleSoftwareKeyboard": "cmd+k",
+  //     "diffViewerScrollToTop": ["g","g"],
+  //     "diffViewerNextFile": ["]","f"],
+  //     "diffViewerPreviousFile": ["[","f"],
+  //     "sendFeedback": "",
+  //     "nextSidebarTabInGroup": "",
+  //     "prevSidebarTabInGroup": "",
+  //     "reopenClosedWorkspace": "",
+  //     "focusPreviousPane": "",
+  //     "focusNextPane": "",
+  //     "sendCtrlFToTerminal": ""
+  //   }
+  // }
+}

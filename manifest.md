@@ -27,6 +27,7 @@ idempotent reconciler so desired-state → current-state is safe to re-run.
 | pi devcontainer | `pi-devcontainer/` | `pi-devcontainer/install.sh [project]` | set `NVIDIA_INFERENCE_API_KEY`; open in container | shareable |
 | nemo-platform dogfood | `nemo-platform/` | `nemo-platform/platform.sh up` | needs `NVIDIA_INFERENCE_API_KEY` | personal |
 | pi-brain worklog ext | `pi-brain/extensions.d/worklog/` | (copy into pi extensions dir) | — | shareable |
+| cmux config | `config/cmux/cmux.json` | `link.sh [--dry-run]` | needs the cmux app; remote-workspace + notification setup is in agentic-garage's Omnistation skill §8 | personal |
 
 When you add a new component to dotfiles, add a row here with its reconciler,
 any post-install auth/secret step, and its **audience** (`shareable` = offer to
