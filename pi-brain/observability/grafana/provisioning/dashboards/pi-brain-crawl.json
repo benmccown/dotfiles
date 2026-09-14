@@ -43,7 +43,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
-          "expr": "sum(last_over_time(pibrain_crawl_input_tokens_total{run_id=\"$run_id\"}[7d]) + last_over_time(pibrain_crawl_output_tokens_total{run_id=\"$run_id\"}[7d]))",
+          "expr": "sum(last_over_time(pibrain_crawl_input_tokens_total{run_id=\"$run_id\"}[7d]) + last_over_time(pibrain_crawl_output_tokens_total{run_id=\"$run_id\"}[7d]) + last_over_time(pibrain_crawl_cache_read_tokens_total{run_id=\"$run_id\"}[7d]) + last_over_time(pibrain_crawl_cache_write_tokens_total{run_id=\"$run_id\"}[7d]))",
           "instant": true, "refId": "A"
         }
       ]
@@ -93,20 +93,35 @@
     },
     {
       "type": "barchart",
-      "title": "Tokens per project (commit-crawl, in + out)",
+      "title": "Tokens per project (commit-crawl, split by kind)",
       "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
       "options": {
-        "orientation": "horizontal", "showValue": "always",
-        "legend": { "showLegend": false, "displayMode": "hidden" },
-        "tooltip": { "mode": "single" }
+        "orientation": "horizontal", "showValue": "always", "stacking": "normal",
+        "legend": { "showLegend": true, "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
       },
       "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }, "overrides": [] },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
-          "expr": "sum by (project) (last_over_time(pibrain_crawl_input_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]) + last_over_time(pibrain_crawl_output_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
-          "format": "table", "instant": true, "legendFormat": "{{project}}", "refId": "A"
+          "expr": "sum by (project) (last_over_time(pibrain_crawl_cache_read_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
+          "format": "table", "instant": true, "legendFormat": "cache read", "refId": "cache_read"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (project) (last_over_time(pibrain_crawl_cache_write_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
+          "format": "table", "instant": true, "legendFormat": "cache write", "refId": "cache_write"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (project) (last_over_time(pibrain_crawl_input_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
+          "format": "table", "instant": true, "legendFormat": "fresh input", "refId": "fresh_input"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (project) (last_over_time(pibrain_crawl_output_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
+          "format": "table", "instant": true, "legendFormat": "output", "refId": "output"
         }
       ]
     },
@@ -146,8 +161,13 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
-          "expr": "sum by (project, ref) (last_over_time(pibrain_crawl_input_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]) + last_over_time(pibrain_crawl_output_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
+          "expr": "sum by (project, ref) (last_over_time(pibrain_crawl_input_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]) + last_over_time(pibrain_crawl_output_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]) + last_over_time(pibrain_crawl_cache_read_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]) + last_over_time(pibrain_crawl_cache_write_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
           "format": "table", "instant": true, "refId": "tokens"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
+          "expr": "sum by (project, ref) (last_over_time(pibrain_crawl_cache_read_tokens_total{run_id=\"$run_id\",kind=\"commit\"}[7d]))",
+          "format": "table", "instant": true, "refId": "cache_read"
         },
         {
           "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
@@ -164,7 +184,8 @@
             "renameByName": {
               "project": "project",
               "ref": "commit",
-              "Value #tokens": "tokens",
+              "Value #tokens": "total tokens",
+              "Value #cache_read": "cache read",
               "Value #duration_s": "duration (s)"
             }
           }
@@ -233,7 +254,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "pibrain-prometheus" },
-          "expr": "sum by (run_id) (pibrain_crawl_input_tokens_total + pibrain_crawl_output_tokens_total)",
+          "expr": "sum by (run_id) (pibrain_crawl_input_tokens_total + pibrain_crawl_output_tokens_total + pibrain_crawl_cache_read_tokens_total + pibrain_crawl_cache_write_tokens_total)",
           "instant": false, "legendFormat": "{{run_id}}", "refId": "A"
         }
       ]
