@@ -16,6 +16,8 @@ services:
       # Native OTLP push ingestion: pi-brain pushes OTLP metrics straight here
       # (POST /api/v1/otlp/v1/metrics). No collector needed.
       - "--web.enable-otlp-receiver"
+      # Admin API: enables tsdb/delete_series for pruning synthetic/test data points.
+      - "--web.enable-admin-api"
 
   grafana:
     image: grafana/grafana:latest
