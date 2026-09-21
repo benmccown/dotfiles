@@ -50,3 +50,4 @@ for pair in "${LINKS[@]}"; do link "${pair%%:*}" "${pair##*:}"; done
 [ $DRY = 1 ] && exit 0
 echo
 echo "note: secrets live in ~/.config/secrets.env (gitignored), sourced by ~/.zshrc"
+echo "note: pi-brain global extensions are linked separately — see pi-brain/link-extensions.sh"
