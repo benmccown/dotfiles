@@ -1,0 +1,20 @@
+# cv.ghostty — dedicated Ghostty config for the `cv` clipboard-editor window.
+# Passed explicitly via --config-file so it does NOT affect your global Ghostty
+# or the cmux-bundled Ghostty. Kept in the dotfiles repo, versioned.
+
+# Don't restore a previous session as a second window/tab.
+window-save-state = never
+
+# Don't prompt "Allow Ghostty to read the clipboard" — the whole point of cv is
+# to move text through the clipboard.
+clipboard-read = allow
+clipboard-write = allow
+
+# Close the window immediately when nvim exits (no "press key to close").
+wait-after-command = false
+
+# Don't ask to confirm closing the surface when nvim quits.
+confirm-close-surface = false
+
+# A single, focused window — no tab restoration, no quick-terminal.
+window-new-tab-position = current

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>com.bmccown.cv</string>
+	<key>category</key>
+	<string>Productivity</string>
+	<key>connections</key>
+	<dict>
+		<key>F40EC791-59A4-4230-B127-80F8D9ADB111</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>2641094E-E6A1-4A53-B3A5-4ABBC177AF88</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Ben McCown</string>
+	<key>description</key>
+	<string>Edit the clipboard contents in nvim (fresh Ghostty window), then land the edited text back on the clipboard. :wq copies, :cq aborts.</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>cv — edit clipboard in nvim</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>2</integer>
+				<key>keyword</key>
+				<string>cv</string>
+				<key>subtext</key>
+				<string>Edit clipboard in nvim; :wq copies the result back</string>
+				<key>text</key>
+				<string>Edit clipboard in nvim</string>
+				<key>withspace</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.keyword</string>
+			<key>uid</key>
+			<string>F40EC791-59A4-4230-B127-80F8D9ADB111</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>/Users/bmccown/.scripts/cv</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>5</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>2641094E-E6A1-4A53-B3A5-4ABBC177AF88</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string>Type `cv` in Alfred to edit the current clipboard contents in nvim.
+
+Flow: in pi, ctrl+x copies the last agent message. Type `cv` in Alfred. A fresh
+lightweight Ghostty window opens nvim (with your config + line numbers) on the
+clipboard text. Edit it, then:
+  :wq  -> the edited buffer is copied back to the clipboard (notification confirms)
+  :cq  -> abort, clipboard left untouched
+
+The script lives in the dotfiles repo at ~/.scripts/cv (versioned), not inside
+this workflow, so it is maintained alongside the rest of Ben's tooling.</string>
+	<key>uidata</key>
+	<dict>
+		<key>2641094E-E6A1-4A53-B3A5-4ABBC177AF88</key>
+		<dict>
+			<key>xpos</key>
+			<integer>310</integer>
+			<key>ypos</key>
+			<integer>70</integer>
+		</dict>
+		<key>F40EC791-59A4-4230-B127-80F8D9ADB111</key>
+		<dict>
+			<key>xpos</key>
+			<integer>60</integer>
+			<key>ypos</key>
+			<integer>70</integer>
+		</dict>
+	</dict>
+	<key>version</key>
+	<string>1.0</string>
+	<key>webaddress</key>
+	<string></string>
+</dict>
+</plist>

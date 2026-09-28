@@ -29,6 +29,7 @@ idempotent reconciler so desired-state → current-state is safe to re-run.
 | pi-brain worklog ext | `pi-brain/extensions.d/worklog/` | (copy into pi extensions dir) | — | shareable |
 | pi-brain global extensions | `~/Code/pi-brain/extensions/*` | `pi-brain/link-extensions.sh [--dry-run]` | needs a `~/Code/pi-brain` checkout; symlinks scratch-space/memory/hello into `~/.pi/agent/extensions/` so they load from any cwd | shareable |
 | cmux config | `config/cmux/cmux.json` | `link.sh [--dry-run]` | needs the cmux app; remote-workspace + notification setup is in agentic-garage's Omnistation skill §8 | personal |
+| Alfred workflows | `alfred/*.workflow.plist` | import into Alfred (see `alfred/README.md`) | needs Alfred; `cv` = clipboard→nvim→clipboard editor | personal |
 
 When you add a new component to dotfiles, add a row here with its reconciler,
 any post-install auth/secret step, and its **audience** (`shareable` = offer to

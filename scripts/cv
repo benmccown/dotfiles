@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# cv — "clipboard edit → clipboard" (a nod to copy/paste).
+#
+# Reads the current clipboard, opens it in nvim in a FRESH, lightweight Ghostty
+# window (clean env — no zshrc / oh-my-zsh), and when you finish editing:
+#   :wq  (nvim exit 0)  -> the edited buffer is pushed back to the clipboard + a notification
+#   :cq  (nvim exit !=0) -> ABORT, clipboard left untouched
+#
+# Designed to be fired from Alfred (keyword `cv`) but also works standalone from
+# any terminal. No arguments; it always reads the macOS clipboard via pbpaste.
+#
+# Flow it streamlines: in pi, ctrl+x copies the last agent message; then `cv`
+# pops an editor to tweak the markdown; :wq lands the result on your clipboard
+# ready to paste into Slack / wherever.
+set -euo pipefail
+
+notify() {
+  # $1 = message, $2 = optional subtitle. Best-effort; never fails the script.
+  local msg="${1:-}" sub="${2:-}"
+  osascript -e "display notification \"${msg//\"/\\\"}\" with title \"cv\" subtitle \"${sub//\"/\\\"}\"" >/dev/null 2>&1 || true
+}
+
+GHOSTTY="/Applications/Ghostty.app/Contents/MacOS/ghostty"
+# Dedicated Ghostty config for the cv window (versioned in the dotfiles repo,
+# next to this script). Resolved relative to this script so it works anywhere.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CV_GHOSTTY_CONFIG="$SCRIPT_DIR/../config/cv.ghostty"
+
+# ---- 1. read the clipboard ----
+content="$(pbpaste 2>/dev/null || true)"
+if [[ -z "$content" ]]; then
+  notify "Nothing on the clipboard" "Copy something first (ctrl+x in pi)"
+  echo "cv: clipboard empty — nothing to edit" >&2
+  exit 1
+fi
+
+# ---- 2. write to a tempfile ----
+# Use ~/.cache (a plain, non-gated path). Avoid $TMPDIR under /var/folders,
+# which macOS TCC treats as sensitive and prompts for folder access.
+tmpdir="${XDG_CACHE_HOME:-$HOME/.cache}/cv"
+mkdir -p "$tmpdir"
+tmpfile="$tmpdir/cv-edit-$(date +%Y%m%d-%H%M%S)-$$.md"
+printf '%s' "$content" > "$tmpfile"
+
+# ---- 3. write the in-terminal wrapper as a standalone executable ----
+# It must be a SINGLE clean command for Ghostty's `-e` (passing
+# `bash -c "$wrapper" arg0 arg" leaks the extra positional args into a shell,
+# which is what produced the stray "<path>; exit" tab). So we bake the tmpfile
+# path directly into a one-shot script and hand `-e` exactly that file.
+#
+# nvim loads YOUR config (~/.config/nvim); `-c "set number"` forces line numbers
+# on after your init (wins regardless of config). Cursor opens at line 1.
+# :wq -> pbcopy the buffer; :cq / error -> abort untouched.
+runner="$tmpdir/cv-run-$$.sh"
+cat > "$runner" <<RUN
+#!/bin/bash
+if nvim -c "set number" "$tmpfile"; then
+  pbcopy < "$tmpfile"
+  osascript -e 'display notification "Edited text is on your clipboard" with title "cv" subtitle "✎ copied"' >/dev/null 2>&1 || true
+else
+  osascript -e 'display notification "Aborted — clipboard left untouched" with title "cv" subtitle "no copy"' >/dev/null 2>&1 || true
+fi
+rm -f "$tmpfile" "$runner"
+RUN
+chmod +x "$runner"
+
+# ---- 4. launch a lightweight Ghostty window running the runner ----
+# We keep the NORMAL process environment (stripping it with `env -i` made macOS
+# treat the launch as untrusted -> TCC folder prompt, and slowed cold start).
+# The "lightweight" goal is met by the runner using `#!/bin/bash` (a plain
+# non-login, non-interactive bash) — it never sources zshrc/oh-my-zsh. nvim
+# still loads your ~/.config/nvim.
+#
+# `-e` gets a SINGLE argument (the runner path) — no `bash -c` positional args
+# to leak. Window behavior (no session restore, no clipboard prompt, close on
+# exit) lives in CV_GHOSTTY_CONFIG, passed with --config-file so it doesn't
+# touch your global Ghostty or the cmux-bundled one.
+#
+# Foregrounding: `-e` launches don't reliably activate the app, so after
+# spawning we `osascript ... activate` Ghostty to pull the window front.
+# If standalone Ghostty is missing, fall back to the default GUI app.
+if [[ -x "$GHOSTTY" ]]; then
+  config_arg=()
+  [[ -f "$CV_GHOSTTY_CONFIG" ]] && config_arg=(--config-file="$CV_GHOSTTY_CONFIG")
+  "$GHOSTTY" \
+      --title="cv — edit clipboard" \
+      "${config_arg[@]}" \
+      -e "$runner" &
+  # Pull the new window to the foreground (a beat, so the window exists first).
+  ( sleep 0.2; osascript -e 'tell application "Ghostty" to activate' >/dev/null 2>&1 ) &
+else
+  notify "Ghostty not found — opened in default editor" "Re-copy manually after editing"
+  open -t "$tmpfile"
+fi
