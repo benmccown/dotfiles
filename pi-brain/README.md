@@ -32,7 +32,7 @@ reproducible so a fresh machine / devcontainer gets all of them.
 ./link-extensions.sh --dry-run  # preview
 ```
 
-Set `PI_BRAIN_DIR` to override the default `~/Code/pi-brain` checkout location.
+Set `LOREGRAFT_DIR` to override the default `~/Code/pi-brain` checkout location.
 
 The list of linked extensions lives in the `LINKS` array in
 `link-extensions.sh`. When pi-brain adds a new global extension, add a row

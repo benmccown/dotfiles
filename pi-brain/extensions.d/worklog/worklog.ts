@@ -40,6 +40,18 @@ export const WL_STATUS_ATTR = "wl_status";
 export const WL_PRIORITY_ATTR = "wl_priority";
 export const WL_LINEAR_ATTR = "wl_linear";
 export const WL_CAPTURED_FROM_ATTR = "wl_captured_from";
+/**
+ * Kind (LE-5): what CATEGORY of work this item is. Default `task` (any ordinary
+ * captured work). `pr-review` marks a PR-review request as its own tracked work
+ * unit — so "reviews I owe" is queryable and a re-swept PR doesn't duplicate.
+ */
+export const WL_KIND_ATTR = "wl_kind";
+/**
+ * A stable external REFERENCE that uniquely identifies the underlying work, so a
+ * repeated capture (e.g. re-sweeping Slack/GitHub) can dedupe on it. For a
+ * `pr-review` item this is the PR URL (or `owner/repo#number`).
+ */
+export const WL_REF_ATTR = "wl_ref";
 
 /**
  * Axis 1 — lifecycle state (D4). Start minimal; add states only if the machine
@@ -62,6 +74,25 @@ export const WL_DEFAULT_STATUS: WlStatus = "triage";
 
 /** States that are OFF the active board (no longer awaiting triage/work). */
 export const WL_TERMINAL_STATUSES: readonly WlStatus[] = ["done", "dropped"];
+
+/**
+ * Work-item KIND (LE-5). `task` is any ordinary captured work (the default);
+ * `pr-review` is a PR-review request tracked as its own unit. Add kinds only when
+ * a category needs distinct handling/queryability.
+ */
+export const WL_KINDS = ["task", "pr-review"] as const;
+export type WlKind = (typeof WL_KINDS)[number];
+export const WL_DEFAULT_KIND: WlKind = "task";
+
+/** True if `k` is a recognized work-item kind. */
+export function isWlKind(k: string | undefined): k is WlKind {
+ return !!k && (WL_KINDS as readonly string[]).includes(k);
+}
+
+/** Coerce an arbitrary string to a valid WlKind, defaulting to task. */
+export function coerceKind(k: string | undefined): WlKind {
+ return isWlKind(k) ? k : WL_DEFAULT_KIND;
+}
 
 /**
  * Axis 2 — priority (D4): mirror Linear's four-tier system so promotion maps
@@ -109,6 +140,10 @@ export interface WorklogItem {
  priority: WlPriority;
  /** `AIRCORE-<n>` or a URL, once promoted to Linear (frontmatter only, never code). */
  linear?: string;
+ /** Work-item kind (LE-5): `task` (default) or `pr-review`. */
+ kind: WlKind;
+ /** Stable external ref that uniquely identifies the work (e.g. a PR URL). */
+ ref?: string;
  /** Provenance: "session X", "meeting 2026-…", "slack". */
  capturedFrom?: string;
  created?: string;
@@ -137,6 +172,8 @@ export function toWorklogItem(
   status: coerceStatus(attrs[WL_STATUS_ATTR]),
   priority: coercePriority(attrs[WL_PRIORITY_ATTR]),
   linear: attrs[WL_LINEAR_ATTR] || undefined,
+  kind: coerceKind(attrs[WL_KIND_ATTR]),
+  ref: attrs[WL_REF_ATTR] || undefined,
   capturedFrom: attrs[WL_CAPTURED_FROM_ATTR] || undefined,
   created: node.created,
   updated: node.updated,
@@ -153,6 +190,8 @@ export function worklogAttrs(input: {
  status?: WlStatus;
  priority?: WlPriority;
  linear?: string;
+ kind?: WlKind;
+ ref?: string;
  capturedFrom?: string;
 }): Record<string, string> {
  const out: Record<string, string> = {};
@@ -160,6 +199,10 @@ export function worklogAttrs(input: {
  if (input.priority !== undefined && input.priority !== 0)
   out[WL_PRIORITY_ATTR] = String(input.priority);
  if (input.linear) out[WL_LINEAR_ATTR] = input.linear;
+ // Only emit kind when it's non-default, keeping ordinary task notes clean.
+ if (input.kind && input.kind !== WL_DEFAULT_KIND)
+  out[WL_KIND_ATTR] = input.kind;
+ if (input.ref) out[WL_REF_ATTR] = input.ref;
  if (input.capturedFrom) out[WL_CAPTURED_FROM_ATTR] = input.capturedFrom;
  return out;
 }
@@ -199,7 +242,8 @@ export function isActive(status: WlStatus): boolean {
 export function formatItemLine(item: WorklogItem): string {
  const prio = item.priority === 0 ? "" : `p${item.priority} `;
  const linear = item.linear ? `  (→ ${item.linear})` : "";
- return `[${item.id}] ${prio}${item.status} · ${item.scope} · ${item.title}${linear}`;
+ const kind = item.kind && item.kind !== WL_DEFAULT_KIND ? `〈${item.kind}〉 ` : "";
+ return `[${item.id}] ${kind}${prio}${item.status} · ${item.scope} · ${item.title}${linear}`;
 }
 
 /**

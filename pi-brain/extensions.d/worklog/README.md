@@ -26,16 +26,16 @@ user-tier skills/agents — they are not duplicated here.
 
 ## Enabling it
 
-pi-brain discovers extensions in `$PI_BRAIN_CONFIG_DIR/extensions.d/` (default
+pi-brain discovers extensions in `$LOREGRAFT_CONFIG_DIR/extensions.d/` (default
 `~/.config/pi-brain/extensions.d/`). Point that at this folder (symlink) and enable
 it in `config.json`:
 
 ```jsonc
 // ~/.config/pi-brain/config.json
-{ "extensions": { "enabled": ["worklog"] } }   // or PI_BRAIN_EXTENSIONS_ENABLED=worklog
+{ "extensions": { "enabled": ["worklog"] } }   // or LOREGRAFT_EXTENSIONS_ENABLED=worklog
 ```
 
 Presence ≠ enabled — the extension is inert until listed in `extensions.enabled`.
 Loading rides pi's project-trust (the extension ships executable code).
 
-Proactive capture nudge is opt-in: `PI_BRAIN_WORKLOG_SUGGEST=on`.
+Proactive capture nudge is opt-in: `LOREGRAFT_WORKLOG_SUGGEST=on`.

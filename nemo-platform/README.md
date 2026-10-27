@@ -28,12 +28,19 @@ cares that the sink here is a local NeMo Platform.
 ## Data dir (isolated, NOT moved)
 
 The platform's data lives at **`~/.local/share/nemo-pi-brain/`** (entity-store
-`nmp-platform.db` + `intake-clickhouse/` + `files/` + encryption key). It is
+`nhx-platform.db` + `intake-clickhouse/` + `files/` + encryption key). It is
 XDG-correct, clearly named, and isolated from a raw DEV nemo instance (which uses
-the default `~/.local/share/nemo/`). `platform.sh` passes `NMP_DATA_DIR` on every
-call, so isolation is script-enforced. **Optional belt-and-suspenders:** export
-`NMP_DATA_DIR=~/.local/share/nemo-pi-brain` in your shell rc so isolation holds
-even outside `platform.sh`.
+the default `~/.local/share/nemo/`).
+
+**The platform reads `NHX_DATA_DIR`** (post NMP->NHX rename). `platform.sh` exports
+`NHX_DATA_DIR` (from its `LOREGRAFT_NMP_DATA_DIR` knob) on every start/CLI call, so
+isolation is script-enforced. This matters: without it the platform silently falls
+back to the DEFAULT `~/.local/share/nemo/` and SHARES ONE SQLite DB with any other
+local Helix instance — both controllers then poll the same jobs table and steal
+each other's jobs (cross-wiring symptom: a job scheduled by the wrong instance, run
+under the wrong executor config/port). One data dir per instance, always.
+**Belt-and-suspenders:** export `NHX_DATA_DIR=~/.local/share/nemo-pi-brain` in your
+shell rc so isolation holds even outside `platform.sh`.
 
 ## nvidia-direct fallback provider (resilience)
 

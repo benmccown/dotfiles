@@ -20,7 +20,7 @@ set -euo pipefail
 
 DRY=0; [ "${1:-}" = "--dry-run" ] && DRY=1
 
-PI_BRAIN="${PI_BRAIN_DIR:-$HOME/Code/pi-brain}"
+PI_BRAIN="${LOREGRAFT_DIR:-$HOME/Code/pi-brain}"
 DEST_DIR="$HOME/.pi/agent/extensions"
 
 # global-symlink-name : pi-brain-relative-extension-dir
@@ -32,7 +32,7 @@ LINKS=(
 )
 
 if [ ! -d "$PI_BRAIN" ]; then
-  echo "pi-brain checkout not found at $PI_BRAIN (set PI_BRAIN_DIR to override)" >&2
+  echo "pi-brain checkout not found at $PI_BRAIN (set LOREGRAFT_DIR to override)" >&2
   exit 1
 fi
 

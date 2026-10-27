@@ -23,8 +23,11 @@ import {
   WL_STATUS_ATTR,
   WL_PRIORITY_ATTR,
   WL_LINEAR_ATTR,
+  WL_KIND_ATTR,
+  WL_REF_ATTR,
   coerceStatus,
   coercePriority,
+  coerceKind,
   priorityLabel,
   worklogAttrs,
   toWorklogItem,
@@ -34,7 +37,7 @@ import {
   type WorklogItem,
 } from "./worklog.ts";
 
-const WORKLOG_SUGGEST_ENV = "PI_BRAIN_WORKLOG_SUGGEST";
+const WORKLOG_SUGGEST_ENV = "LOREGRAFT_WORKLOG_SUGGEST";
 
 /** Is proactive worklog capture enabled (default off; the safety-valve exception)? */
 function worklogSuggestEnabled(): boolean {
@@ -132,10 +135,11 @@ function listWorklog(
 export function registerTools(pi: ExtensionAPI, api: BrainApi): void {
   const sessionId = (): string | undefined => {
     try {
-      return (
-        (pi as unknown as { sessionManager?: { getSessionId?: () => string } })
-          .sessionManager?.getSessionId?.() ?? undefined
-      );
+      // pi's ExtensionAPI type omits sessionManager, but the runtime object carries
+      // it. Narrow via a typed local (no double-cast) and optional-chain every hop
+      // so a miss yields undefined rather than throwing.
+      const withSm = pi as { sessionManager?: { getSessionId?: () => string } };
+      return withSm.sessionManager?.getSessionId?.() ?? undefined;
     } catch {
       return undefined;
     }
@@ -178,6 +182,18 @@ export function registerTools(pi: ExtensionAPI, api: BrainApi): void {
             "OPTIONAL Linear-mirrored priority 1=Urgent 2=High 3=Medium 4=Low (0/omit=unset). Usually leave UNSET at capture — decide it at triage.",
         }),
       ),
+      kind: Type.Optional(
+        Type.String({
+          description:
+            "OPTIONAL work-item kind: 'task' (default, any ordinary work) or 'pr-review' (a PR-review request tracked as its own unit). Set 'pr-review' when capturing a review someone requested.",
+        }),
+      ),
+      ref: Type.Optional(
+        Type.String({
+          description:
+            "OPTIONAL stable external reference uniquely identifying the work (a PR URL or owner/repo#number for a pr-review). Enables dedupe on re-capture and 'reviews I owe' queries.",
+        }),
+      ),
     }),
     async execute(_tc, params) {
       try {
@@ -187,6 +203,8 @@ export function registerTools(pi: ExtensionAPI, api: BrainApi): void {
           scope?: string;
           captured_from?: string;
           priority?: number;
+          kind?: string;
+          ref?: string;
         };
         if (!p.title?.trim() || !p.body?.trim())
           return errResult("title and body are required");
@@ -194,6 +212,8 @@ export function registerTools(pi: ExtensionAPI, api: BrainApi): void {
         const attrs = worklogAttrs({
           status: WL_DEFAULT_STATUS,
           priority,
+          kind: coerceKind(p.kind),
+          ref: p.ref,
           capturedFrom: p.captured_from,
         });
         const sid = sessionId();
@@ -296,6 +316,8 @@ export function registerTools(pi: ExtensionAPI, api: BrainApi): void {
         const meta = [
           `status: ${item.status}`,
           `priority: ${priorityLabel(item.priority)}`,
+          item.kind && item.kind !== "task" ? `kind: ${item.kind}` : null,
+          item.ref ? `ref: ${item.ref}` : null,
           item.linear ? `linear: ${item.linear}` : null,
           item.capturedFrom ? `captured_from: ${item.capturedFrom}` : null,
           `scope: ${item.scope}`,
@@ -341,6 +363,18 @@ export function registerTools(pi: ExtensionAPI, api: BrainApi): void {
         }),
       ),
       title: Type.Optional(Type.String({ description: "New title. Omit to keep." })),
+      kind: Type.Optional(
+        Type.String({
+          description:
+            "New work-item kind: 'task' or 'pr-review'. Omit to keep. (Set 'pr-review' to reclassify an item as a tracked review request.)",
+        }),
+      ),
+      ref: Type.Optional(
+        Type.String({
+          description:
+            "New external reference (e.g. a PR URL for a pr-review item). Omit to keep.",
+        }),
+      ),
       body: Type.Optional(
         Type.String({
           description: "New/replacement body brief (markdown). Omit to keep current.",
@@ -354,6 +388,8 @@ export function registerTools(pi: ExtensionAPI, api: BrainApi): void {
           status?: string;
           priority?: number;
           linear?: string;
+          kind?: string;
+          ref?: string;
           title?: string;
           body?: string;
         };
@@ -372,6 +408,8 @@ export function registerTools(pi: ExtensionAPI, api: BrainApi): void {
         if (p.priority !== undefined)
           attrPatch[WL_PRIORITY_ATTR] = String(coercePriority(p.priority));
         if (p.linear?.trim()) attrPatch[WL_LINEAR_ATTR] = p.linear.trim();
+        if (p.kind?.trim()) attrPatch[WL_KIND_ATTR] = coerceKind(p.kind);
+        if (p.ref?.trim()) attrPatch[WL_REF_ATTR] = p.ref.trim();
         api.updateNote(p.id.trim(), {
           title: p.title,
           body: p.body,
@@ -384,6 +422,8 @@ export function registerTools(pi: ExtensionAPI, api: BrainApi): void {
           p.status ? `status=${p.status}` : null,
           p.priority === undefined ? null : `priority=${coercePriority(p.priority)}`,
           p.linear ? `linear=${p.linear}` : null,
+          p.kind ? `kind=${coerceKind(p.kind)}` : null,
+          p.ref ? "ref" : null,
           p.title === undefined ? null : "title",
           p.body === undefined ? null : "body",
         ]

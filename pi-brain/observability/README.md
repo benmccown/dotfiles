@@ -51,7 +51,7 @@ Then run a verb/pass, e.g. a maintenance pass:
 ```bash
 cd <the pi-brain checkout/worktree>
 OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://localhost:9090/api/v1/otlp/v1/metrics \
-PI_BRAIN_VAULT_DIR=/Users/bmccown/Code/pi-brain/brain \
+LOREGRAFT_VAULT_DIR=/Users/bmccown/Code/pi-brain/brain \
 pi -p "/brain-maintain"
 ```
 

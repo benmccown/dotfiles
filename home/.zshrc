@@ -21,10 +21,13 @@ export GITLAB_HOST=gitlab-master.nvidia.com
 [ -f ~/.config/secrets.env ] && source ~/.config/secrets.env
 
 # --- pi-brain flags ---
-export PI_BRAIN_TELEMETRY_PAYLOADS=on
-export PI_BRAIN_VERIFY_DIRS="$HOME/Code/pi-brain/.monitored-projects"
-export PI_BRAIN_CAPTURE_EVERY_N_RUNS=3
-export PI_BRAIN_CMUX=1
+export LOREGRAFT_TELEMETRY_PAYLOADS=on
+export LOREGRAFT_VERIFY_DIRS="$HOME/Code/pi-brain/.work/monitored"
+export LOREGRAFT_CAPTURE_EVERY_N_RUNS=3
+export LOREGRAFT_CMUX=1
+
+# --- agent scratch space (scratch-space extension; default is ~/.pi/scratch) ---
+export PI_SCRATCH_ROOT="$HOME/Code/agent-scratch-space"
 
 # --- aliases (binaries present on both host + container) ---
 alias lr="eza --icons -alh -snew"

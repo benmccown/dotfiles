@@ -14,7 +14,7 @@
 #                               # -> forwards to pi-devcontainer/install.sh
 #
 # cmux/worktree flow: `spawn.sh <branch> --launch pi-dev` launches each worktree's
-# session in the container. Env like PI_BRAIN_VAULT_DIR is forwarded through.
+# session in the container. Env like LOREGRAFT_VAULT_DIR is forwarded through.
 set -euo pipefail
 
 NAME="${PI_DEV_CONTAINER:-pi-agent}"
@@ -78,7 +78,7 @@ fi
 # but STRIP the session/agent-identity vars that pi injects into ITS OWN child
 # shells. If pi-dev is run from inside a pi session, those would make the nested
 # container-pi try to resume the host's session / act as a subagent, which breaks
-# config + model discovery ("No models available"). Keep PI_BRAIN_* etc.
+# config + model discovery ("No models available"). Keep LOREGRAFT_* etc.
 env_args=()
 for v in $(env | grep -oE '^PI_[A-Z0-9_]+' || true); do
   case "$v" in

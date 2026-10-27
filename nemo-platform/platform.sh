@@ -24,29 +24,29 @@
 #   scripts/platform.sh redeploy  # stop, git pull latest main, start again (data intact)
 #
 # Config (override via env):
-#   PI_BRAIN_NMP_PORT       (default 49500)  bespoke port in the RFC 6335 dynamic range
-#   PI_BRAIN_NMP_DATA_DIR   (default ~/.local/share/nemo-pi-brain)  isolated from dev instances
-#   PI_BRAIN_NMP_DIR        (default <dotfiles>/.repos/nemo-platform)  the dedicated checkout (also a verify ground-truth source)
-#   PI_BRAIN_NMP_SHALLOW_SINCE (default 1 month ago)  clone depth
-#   PI_BRAIN_INFERENCE_KEY_ENV (default NVIDIA_INFERENCE_API_KEY)  env var holding the provider key
-#   PI_BRAIN_INFERENCE_HOST_URL (default https://inference-api.nvidia.com/v1)
-#   PI_BRAIN_WORKSPACE      (default default)
-#   PI_BRAIN_PROVIDER       (default nvidia-inference)
-#   PI_BRAIN_SMOKE_MODEL    (default default/aws-anthropic-bedrock-claude-sonnet-4-6)
+#   LOREGRAFT_NMP_PORT       (default 49500)  bespoke port in the RFC 6335 dynamic range
+#   LOREGRAFT_NMP_DATA_DIR   (default ~/.local/share/nemo-pi-brain)  isolated from dev instances; exported to the platform as NHX_DATA_DIR (the var the platform actually reads post NMP->NHX rename)
+#   LOREGRAFT_NMP_DIR        (default <dotfiles>/.repos/nemo-platform)  the dedicated checkout (also a verify ground-truth source)
+#   LOREGRAFT_NMP_SHALLOW_SINCE (default 1 month ago)  clone depth
+#   LOREGRAFT_INFERENCE_KEY_ENV (default NVIDIA_INFERENCE_API_KEY)  env var holding the provider key
+#   LOREGRAFT_INFERENCE_HOST_URL (default https://inference-api.nvidia.com/v1)
+#   LOREGRAFT_WORKSPACE      (default default)
+#   LOREGRAFT_PROVIDER       (default nvidia-inference)
+#   LOREGRAFT_SMOKE_MODEL    (default default/aws-anthropic-bedrock-claude-sonnet-4-6)
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"  # = dotfiles repo root (parent of nemo-platform/)
-NMP_PORT="${PI_BRAIN_NMP_PORT:-49500}"
-NMP_DATA_DIR="${PI_BRAIN_NMP_DATA_DIR:-$HOME/.local/share/nemo-pi-brain}"
-NMP_DIR="${PI_BRAIN_NMP_DIR:-$REPO_DIR/.repos/nemo-platform}"
-SHALLOW_SINCE="${PI_BRAIN_NMP_SHALLOW_SINCE:-$(date -v-1m +%Y-%m-%d 2>/dev/null || date -d '1 month ago' +%Y-%m-%d)}"
-KEY_ENV="${PI_BRAIN_INFERENCE_KEY_ENV:-NVIDIA_INFERENCE_API_KEY}"
-HOST_URL="${PI_BRAIN_INFERENCE_HOST_URL:-https://inference-api.nvidia.com/v1}"
-WORKSPACE="${PI_BRAIN_WORKSPACE:-default}"
-PROVIDER="${PI_BRAIN_PROVIDER:-nvidia-inference}"
+NMP_PORT="${LOREGRAFT_NMP_PORT:-49500}"
+NMP_DATA_DIR="${LOREGRAFT_NMP_DATA_DIR:-$HOME/.local/share/nemo-pi-brain}"
+NMP_DIR="${LOREGRAFT_NMP_DIR:-$REPO_DIR/.repos/nemo-platform}"
+SHALLOW_SINCE="${LOREGRAFT_NMP_SHALLOW_SINCE:-$(date -v-1m +%Y-%m-%d 2>/dev/null || date -d '1 month ago' +%Y-%m-%d)}"
+KEY_ENV="${LOREGRAFT_INFERENCE_KEY_ENV:-NVIDIA_INFERENCE_API_KEY}"
+HOST_URL="${LOREGRAFT_INFERENCE_HOST_URL:-https://inference-api.nvidia.com/v1}"
+WORKSPACE="${LOREGRAFT_WORKSPACE:-default}"
+PROVIDER="${LOREGRAFT_PROVIDER:-nvidia-inference}"
 SECRET_NAME="${PROVIDER}-key"
-SMOKE_MODEL="${PI_BRAIN_SMOKE_MODEL:-default/aws-anthropic-bedrock-claude-sonnet-4-6}"
+SMOKE_MODEL="${LOREGRAFT_SMOKE_MODEL:-default/aws-anthropic-bedrock-claude-sonnet-4-6}"
 REPO_URL="git@github.com:NVIDIA-NeMo/nemo-platform.git"
 TMUX_SESSION="pi-brain-nemo"
 LOG_FILE="/tmp/pi-brain-nemo.log"
@@ -57,8 +57,12 @@ warn() { printf '\033[1;33m[pi-brain]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31m[pi-brain]\033[0m %s\n' "$*" >&2; exit 1; }
 
 # Run a nemo CLI command inside the flox-activated checkout, with the right env.
+# The platform reads NHX_* env vars (post NMP->NHX rename); the script-local NMP_*
+# vars are just this helper's own knobs. Export them UNDER THE NHX_ NAMES or the
+# platform silently falls back to the default data dir (~/.local/share/nemo) and
+# collides with every other local Helix instance sharing that SQLite DB.
 nemo_cli() {
-  ( cd "$NMP_DIR" && NMP_DATA_DIR="$NMP_DATA_DIR" NMP_BASE_URL="$BASE_URL" \
+  ( cd "$NMP_DIR" && NHX_DATA_DIR="$NMP_DATA_DIR" NHX_BASE_URL="$BASE_URL" \
       flox -q activate --dir . -- uv run nemo "$@" )
 }
 
@@ -100,7 +104,7 @@ cmd_start() {
   tmux kill-session -t "$TMUX_SESSION" 2>/dev/null || true
   log "starting platform on $BASE_URL (data dir: $NMP_DATA_DIR, tmux: $TMUX_SESSION)"
   tmux new-session -d -s "$TMUX_SESSION" -c "$NMP_DIR" \
-    "export NMP_DATA_DIR='$NMP_DATA_DIR' NMP_BASE_URL='$BASE_URL'; flox -q activate --dir . -- uv run nemo services run --port $NMP_PORT > '$LOG_FILE' 2>&1"
+    "export NHX_DATA_DIR='$NMP_DATA_DIR' NHX_BASE_URL='$BASE_URL'; flox -q activate --dir . -- uv run nemo services run --port $NMP_PORT > '$LOG_FILE' 2>&1"
   cmd_wait
 }
 
